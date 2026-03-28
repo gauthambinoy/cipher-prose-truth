@@ -3,7 +3,6 @@ import {
   Card,
   CardContent,
   Typography,
-  Grid,
   useTheme,
 } from "@mui/material";
 import TextFieldsOutlinedIcon from "@mui/icons-material/TextFieldsOutlined";
@@ -17,7 +16,7 @@ import {
   Bar,
   XAxis,
   YAxis,
-  CartesianGrid,
+  CartesianGrid as Grid,
   Tooltip,
   ResponsiveContainer,
   PieChart,

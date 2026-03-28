@@ -92,6 +92,15 @@ def _get_analyzer(name: str):
         elif name == "comparison":
             from app.ml.analyzers.comparison import TextComparisonEngine
             _analyzers[name] = TextComparisonEngine()
+        elif name == "seo":
+            from app.ml.analyzers.seo_analyzer import SEOAnalyzer
+            _analyzers[name] = SEOAnalyzer()
+        elif name == "facts":
+            from app.ml.analyzers.fact_checker import FactChecker
+            _analyzers[name] = FactChecker()
+        elif name == "paraphrase":
+            from app.ml.analyzers.paraphrase_detector import ParaphraseDetector
+            _analyzers[name] = ParaphraseDetector()
     return _analyzers[name]
 
 
@@ -276,3 +285,48 @@ async def full_analysis(
         suggestions=suggestions_res,
         processing_time_ms=elapsed,
     )
+
+
+# ── New analytics: SEO, Facts, Paraphrase ────────────────────────────
+
+
+@router.post("/analytics/seo", response_model=AnalyticsResponse)
+async def seo_analysis(
+    request: TextRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """SEO content analysis with score and recommendations."""
+    start = time.perf_counter()
+    analyzer = _get_analyzer("seo")
+    results = await _run_analysis(analyzer, request.text)
+    elapsed = int((time.perf_counter() - start) * 1000)
+    aid = await _persist_result(db, "seo", request.text, results, elapsed)
+    return AnalyticsResponse(analysis_id=aid, analysis_type="seo", results=results, processing_time_ms=elapsed)
+
+
+@router.post("/analytics/facts", response_model=AnalyticsResponse)
+async def fact_check_analysis(
+    request: TextRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """Fact checking: extract claims, flag vague attributions, credibility score."""
+    start = time.perf_counter()
+    analyzer = _get_analyzer("facts")
+    results = await _run_analysis(analyzer, request.text)
+    elapsed = int((time.perf_counter() - start) * 1000)
+    aid = await _persist_result(db, "facts", request.text, results, elapsed)
+    return AnalyticsResponse(analysis_id=aid, analysis_type="facts", results=results, processing_time_ms=elapsed)
+
+
+@router.post("/analytics/paraphrase", response_model=AnalyticsResponse)
+async def paraphrase_analysis(
+    request: TextRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """Internal paraphrase / self-plagiarism detection within a document."""
+    start = time.perf_counter()
+    analyzer = _get_analyzer("paraphrase")
+    results = await _run_analysis(analyzer, request.text)
+    elapsed = int((time.perf_counter() - start) * 1000)
+    aid = await _persist_result(db, "paraphrase", request.text, results, elapsed)
+    return AnalyticsResponse(analysis_id=aid, analysis_type="paraphrase", results=results, processing_time_ms=elapsed)

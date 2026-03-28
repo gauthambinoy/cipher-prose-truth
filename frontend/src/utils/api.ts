@@ -179,4 +179,194 @@ export async function getShareLink(
   return result;
 }
 
+// --- Paraphrase / Fact Check / SEO / Dashboard endpoints ---
+
+import type {
+  ParaphraseResult,
+  FactCheckResult,
+  SEOResult,
+  DashboardStats,
+  DashboardTrends,
+  TopSignal,
+} from "@/types/analytics";
+
+export async function analyzeParaphrase(text: string): Promise<ParaphraseResult> {
+  const { data } = await api.post<ParaphraseResult>("/analytics/paraphrase", { text });
+  return data;
+}
+
+export async function checkFacts(text: string): Promise<FactCheckResult> {
+  const { data } = await api.post<FactCheckResult>("/analytics/facts", { text });
+  return data;
+}
+
+export async function analyzeSEO(text: string): Promise<SEOResult> {
+  const { data } = await api.post<SEOResult>("/analytics/seo", { text });
+  return data;
+}
+
+export async function getDashboardStats(): Promise<DashboardStats> {
+  const { data } = await api.get<DashboardStats>("/dashboard/stats");
+  return data;
+}
+
+export async function getDashboardTrends(): Promise<DashboardTrends> {
+  const { data } = await api.get<DashboardTrends>("/dashboard/trends");
+  return data;
+}
+
+export async function getTopSignals(limit: number = 10): Promise<TopSignal[]> {
+  const { data } = await api.get<TopSignal[]>("/dashboard/top-signals", {
+    params: { limit },
+  });
+  return data;
+}
+
+// --- Rewrite Detection ---
+
+export interface RewriteDetectionResponse {
+  isRewritten: boolean;
+  naturalnessScore: number;
+  confidence: number;
+  residualPatterns: {
+    id: string;
+    pattern: string;
+    description: string;
+    severity: "high" | "medium" | "low";
+    count: number;
+  }[];
+  explanation: string;
+}
+
+export async function detectRewrite(text: string): Promise<RewriteDetectionResponse> {
+  const { data } = await api.post<RewriteDetectionResponse>("/detect/rewrite", { text });
+  return data;
+}
+
+// --- Fingerprint ---
+
+export interface FingerprintResponse {
+  fingerprintId: string;
+  hash: string;
+  createdAt: string;
+}
+
+export async function generateFingerprint(text: string): Promise<FingerprintResponse> {
+  const { data } = await api.post<FingerprintResponse>("/fingerprint/generate", { text });
+  return data;
+}
+
+export async function verifyFingerprint(
+  text: string,
+  fingerprintId: string
+): Promise<{ verified: boolean; similarity: number }> {
+  const { data } = await api.post<{ verified: boolean; similarity: number }>(
+    "/fingerprint/verify",
+    { text, fingerprint_id: fingerprintId }
+  );
+  return data;
+}
+
+// --- Version History ---
+
+export interface VersionEntry {
+  id: string;
+  versionNumber: number;
+  timestamp: string;
+  aiScore: number;
+  wordCount: number;
+  diff?: { type: "added" | "removed" | "unchanged"; text: string }[];
+}
+
+export async function submitVersion(
+  documentId: string,
+  text: string
+): Promise<VersionEntry> {
+  const { data } = await api.post<VersionEntry>("/versions/submit", {
+    document_id: documentId,
+    text,
+  });
+  return data;
+}
+
+export async function getVersionHistory(
+  documentId: string
+): Promise<VersionEntry[]> {
+  const { data } = await api.get<VersionEntry[]>(`/versions/${documentId}`);
+  return data;
+}
+
+// --- Coach / Suggestions ---
+
+export interface CoachSuggestion {
+  id: string;
+  type: "humanize" | "buzzword" | "grammar" | "readability";
+  original: string;
+  suggested: string;
+  explanation: string;
+}
+
+export async function getCoachSuggestions(
+  text: string
+): Promise<CoachSuggestion[]> {
+  const { data } = await api.post<CoachSuggestion[]>("/coach/suggestions", { text });
+  return data;
+}
+
+// --- Batch Processing ---
+
+export interface BatchItemResult {
+  id: string;
+  filename: string;
+  wordCount: number;
+  aiScore: number;
+  classification: string;
+  status: "done" | "error";
+  error?: string;
+}
+
+export interface BatchResponse {
+  batchId: string;
+  results: BatchItemResult[];
+  summary: {
+    totalFiles: number;
+    processed: number;
+    flagged: number;
+    avgScore: number;
+  };
+}
+
+export async function processBatch(
+  items: { filename: string; text: string }[]
+): Promise<BatchResponse> {
+  const { data } = await api.post<BatchResponse>("/batch/process", { items });
+  return data;
+}
+
+export async function getBatchResults(
+  batchId: string
+): Promise<BatchResponse> {
+  const { data } = await api.get<BatchResponse>(`/batch/${batchId}`);
+  return data;
+}
+
+// --- Share Analysis ---
+
+export interface ShareAnalysisResponse {
+  url: string;
+  expiresAt: string | null;
+  shareId: string;
+}
+
+export async function shareAnalysis(
+  analysisData: Record<string, unknown>,
+  expiry: "24h" | "7d" | "30d" | "never"
+): Promise<ShareAnalysisResponse> {
+  const { data } = await api.post<ShareAnalysisResponse>("/share", {
+    data: analysisData,
+    expiry,
+  });
+  return data;
+}
+
 export default api;

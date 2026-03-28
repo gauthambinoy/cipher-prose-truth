@@ -2,7 +2,6 @@ import {
   Box,
   Card,
   CardContent,
-  Grid,
   Typography,
   ToggleButtonGroup,
   ToggleButton,
@@ -16,7 +15,7 @@ import {
   Line,
   XAxis,
   YAxis,
-  CartesianGrid,
+  CartesianGrid as Grid,
   Tooltip,
   ResponsiveContainer,
 } from "recharts";

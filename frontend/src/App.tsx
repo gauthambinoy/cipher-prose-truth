@@ -26,6 +26,8 @@ import AutoFixHighOutlinedIcon from "@mui/icons-material/AutoFixHighOutlined";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import AnalyticsOutlinedIcon from "@mui/icons-material/AnalyticsOutlined";
 import CompareArrowsOutlinedIcon from "@mui/icons-material/CompareArrowsOutlined";
+import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
+import BatchPredictionOutlinedIcon from "@mui/icons-material/BatchPredictionOutlined";
 import { AnimatePresence } from "framer-motion";
 import { useAppStore } from "@/stores/appStore";
 
@@ -35,10 +37,19 @@ import HumanizePage from "@/pages/HumanizePage";
 import HistoryPage from "@/pages/HistoryPage";
 import AnalyticsPage from "@/pages/AnalyticsPage";
 import ComparePage from "@/pages/ComparePage";
+import DashboardPage from "@/pages/DashboardPage";
+import BatchPage from "@/pages/BatchPage";
+import FloatingActionMenu from "@/components/common/FloatingActionMenu";
+import NotificationCenter from "@/components/common/NotificationCenter";
 
 const DRAWER_WIDTH = 260;
 
 const navItems = [
+  {
+    label: "Dashboard",
+    path: "/dashboard",
+    icon: <DashboardOutlinedIcon />,
+  },
   {
     label: "AI Detection",
     path: "/",
@@ -63,6 +74,11 @@ const navItems = [
     label: "Compare",
     path: "/compare",
     icon: <CompareArrowsOutlinedIcon />,
+  },
+  {
+    label: "Batch",
+    path: "/batch",
+    icon: <BatchPredictionOutlinedIcon />,
   },
   {
     label: "History",
@@ -213,6 +229,7 @@ export default function App() {
               </IconButton>
             )}
             <Box sx={{ flex: 1 }} />
+            <NotificationCenter />
             <IconButton onClick={toggleTheme} color="inherit">
               {themeMode === "dark" ? (
                 <Brightness7Icon />
@@ -234,14 +251,18 @@ export default function App() {
           <AnimatePresence mode="wait">
             <Routes>
               <Route path="/" element={<DetectPage />} />
+              <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/plagiarism" element={<PlagiarismPage />} />
               <Route path="/humanize" element={<HumanizePage />} />
               <Route path="/analytics" element={<AnalyticsPage />} />
               <Route path="/compare" element={<ComparePage />} />
+              <Route path="/batch" element={<BatchPage />} />
               <Route path="/history" element={<HistoryPage />} />
             </Routes>
           </AnimatePresence>
         </Box>
+
+        <FloatingActionMenu />
       </Box>
     </Box>
   );

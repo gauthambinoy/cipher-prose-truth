@@ -6,6 +6,7 @@ import type {
   HumanizationResult,
   HistoryItem,
 } from "@/types/analysis";
+import type { AppNotification } from "@/types/analytics";
 
 interface AppState {
   themeMode: "dark" | "light";
@@ -28,6 +29,12 @@ interface AppState {
 
   drawerOpen: boolean;
   setDrawerOpen: (open: boolean) => void;
+
+  notifications: AppNotification[];
+  addNotification: (message: string, type?: AppNotification["type"]) => void;
+  markNotificationRead: (id: string) => void;
+  clearNotifications: () => void;
+  removeNotification: (id: string) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -56,6 +63,32 @@ export const useAppStore = create<AppState>()(
 
       drawerOpen: false,
       setDrawerOpen: (open) => set({ drawerOpen: open }),
+
+      notifications: [],
+      addNotification: (message, type = "info") =>
+        set((state) => ({
+          notifications: [
+            {
+              id: `notif-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+              message,
+              type,
+              timestamp: Date.now(),
+              read: false,
+            },
+            ...state.notifications,
+          ],
+        })),
+      markNotificationRead: (id) =>
+        set((state) => ({
+          notifications: state.notifications.map((n) =>
+            n.id === id ? { ...n, read: true } : n
+          ),
+        })),
+      clearNotifications: () => set({ notifications: [] }),
+      removeNotification: (id) =>
+        set((state) => ({
+          notifications: state.notifications.filter((n) => n.id !== id),
+        })),
     }),
     {
       name: "clarityai-storage",

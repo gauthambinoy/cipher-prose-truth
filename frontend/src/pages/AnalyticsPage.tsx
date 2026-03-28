@@ -22,10 +22,19 @@ import GrammarChecker from "@/components/analytics/GrammarChecker";
 import TextStatisticsPanel from "@/components/analytics/TextStatisticsPanel";
 import WritingSuggestions from "@/components/analytics/WritingSuggestions";
 import CitationChecker from "@/components/analytics/CitationChecker";
+import ParaphraseDetector from "@/components/analytics/ParaphraseDetector";
+import FactChecker from "@/components/analytics/FactChecker";
+import SEOAnalyzer from "@/components/analytics/SEOAnalyzer";
 import ExportMenu from "@/components/common/ExportMenu";
 import KeyboardShortcuts from "@/components/common/KeyboardShortcuts";
 import { useFullAnalytics } from "@/hooks/useAnalytics";
-import type { FullAnalyticsResult } from "@/types/analytics";
+import { analyzeParaphrase, checkFacts, analyzeSEO } from "@/utils/api";
+import type {
+  FullAnalyticsResult,
+  ParaphraseResult,
+  FactCheckResult,
+  SEOResult,
+} from "@/types/analytics";
 
 function countWords(text: string): number {
   return text
@@ -64,6 +73,9 @@ export default function AnalyticsPage() {
   const [text, setText] = useState("");
   const [tab, setTab] = useState(0);
   const [result, setResult] = useState<FullAnalyticsResult | null>(null);
+  const [paraphraseResult, setParaphraseResult] = useState<ParaphraseResult | null>(null);
+  const [factResult, setFactResult] = useState<FactCheckResult | null>(null);
+  const [seoResult, setSeoResult] = useState<SEOResult | null>(null);
 
   const fullAnalytics = useFullAnalytics();
   const wordCount = countWords(text);
@@ -75,6 +87,16 @@ export default function AnalyticsPage() {
     fullAnalytics.mutate(text, {
       onSuccess: (data) => setResult(data),
     });
+    // Run additional analyses in parallel
+    analyzeParaphrase(text)
+      .then((data) => setParaphraseResult(data))
+      .catch(() => {});
+    checkFacts(text)
+      .then((data) => setFactResult(data))
+      .catch(() => {});
+    analyzeSEO(text)
+      .then((data) => setSeoResult(data))
+      .catch(() => {});
   }, [text, isMinWords, isLoading, fullAnalytics]);
 
   const tabLabels = [
@@ -84,6 +106,9 @@ export default function AnalyticsPage() {
     "Statistics",
     "Suggestions",
     "Citations",
+    "Paraphrase",
+    "Facts",
+    "SEO",
   ];
 
   return (
@@ -243,6 +268,42 @@ export default function AnalyticsPage() {
                 </TabPanel>
                 <TabPanel value={tab} index={5}>
                   <CitationChecker data={result.citations} />
+                </TabPanel>
+                <TabPanel value={tab} index={6}>
+                  {paraphraseResult ? (
+                    <ParaphraseDetector data={paraphraseResult} />
+                  ) : (
+                    <Box sx={{ textAlign: "center", py: 4 }}>
+                      <CircularProgress size={28} />
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                        Analyzing paraphrases...
+                      </Typography>
+                    </Box>
+                  )}
+                </TabPanel>
+                <TabPanel value={tab} index={7}>
+                  {factResult ? (
+                    <FactChecker data={factResult} />
+                  ) : (
+                    <Box sx={{ textAlign: "center", py: 4 }}>
+                      <CircularProgress size={28} />
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                        Checking facts...
+                      </Typography>
+                    </Box>
+                  )}
+                </TabPanel>
+                <TabPanel value={tab} index={8}>
+                  {seoResult ? (
+                    <SEOAnalyzer data={seoResult} />
+                  ) : (
+                    <Box sx={{ textAlign: "center", py: 4 }}>
+                      <CircularProgress size={28} />
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                        Analyzing SEO...
+                      </Typography>
+                    </Box>
+                  )}
                 </TabPanel>
               </CardContent>
             </Card>
