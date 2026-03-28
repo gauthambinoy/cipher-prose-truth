@@ -6,6 +6,7 @@ import {
   Chip,
   useTheme,
 } from "@mui/material";
+import Grid from "@mui/material/Grid2";
 import MenuBookOutlinedIcon from "@mui/icons-material/MenuBookOutlined";
 import TimerOutlinedIcon from "@mui/icons-material/TimerOutlined";
 import { motion } from "framer-motion";
@@ -14,7 +15,6 @@ import {
   Bar,
   XAxis,
   YAxis,
-  CartesianGrid as Grid,
   Tooltip,
   ResponsiveContainer,
   Cell,

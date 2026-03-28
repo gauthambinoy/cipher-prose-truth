@@ -16,6 +16,7 @@ import {
   Alert,
   useTheme,
 } from "@mui/material";
+import Grid from "@mui/material/Grid2";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TextFieldsIcon from "@mui/icons-material/TextFields";
@@ -26,7 +27,6 @@ import {
   Bar,
   XAxis,
   YAxis,
-  CartesianGrid as Grid,
   Tooltip,
   ResponsiveContainer,
   LineChart,

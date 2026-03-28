@@ -12,6 +12,7 @@ import {
   Divider,
   useTheme,
 } from "@mui/material";
+import Grid from "@mui/material/Grid2";
 import CompareArrowsOutlinedIcon from "@mui/icons-material/CompareArrowsOutlined";
 import SmartToyOutlinedIcon from "@mui/icons-material/SmartToyOutlined";
 import { motion, AnimatePresence } from "framer-motion";

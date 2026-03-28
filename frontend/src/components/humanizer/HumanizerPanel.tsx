@@ -10,14 +10,15 @@ import {
   Divider,
   useTheme,
 } from "@mui/material";
+import Grid from "@mui/material/Grid2";
 import {
   LineChart,
   Line,
   XAxis,
   YAxis,
-  CartesianGrid as Grid,
   Tooltip,
   ResponsiveContainer,
+  CartesianGrid,
 } from "recharts";
 import { motion } from "framer-motion";
 import type { HumanizationResult } from "@/types/analysis";

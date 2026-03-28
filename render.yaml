@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: clarityai-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        value: sqlite+aiosqlite:///./data/clarityai.db
+      - key: CORS_ORIGINS
+        value: https://clarityai.vercel.app,http://localhost:5173
+      - key: SECRET_KEY
+        generateValue: true
+    healthCheckPath: /api/v1/health
+    autoDeploy: true

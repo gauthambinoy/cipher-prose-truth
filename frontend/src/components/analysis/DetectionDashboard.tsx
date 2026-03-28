@@ -9,6 +9,7 @@ import {
   Tab,
   Divider,
 } from "@mui/material";
+import Grid from "@mui/material/Grid2";
 import SmartToyOutlinedIcon from "@mui/icons-material/SmartToyOutlined";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import { motion } from "framer-motion";

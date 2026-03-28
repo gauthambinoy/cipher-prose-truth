@@ -12,6 +12,7 @@ import {
   TableRow,
   useTheme,
 } from "@mui/material";
+import Grid from "@mui/material/Grid2";
 import { motion } from "framer-motion";
 import type { ComparisonResult } from "@/types/analytics";
 

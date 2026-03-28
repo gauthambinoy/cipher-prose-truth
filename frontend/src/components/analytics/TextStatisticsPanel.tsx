@@ -5,6 +5,7 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
+import Grid from "@mui/material/Grid2";
 import TextFieldsOutlinedIcon from "@mui/icons-material/TextFieldsOutlined";
 import ShortTextOutlinedIcon from "@mui/icons-material/ShortTextOutlined";
 import SubjectOutlinedIcon from "@mui/icons-material/SubjectOutlined";
@@ -16,7 +17,6 @@ import {
   Bar,
   XAxis,
   YAxis,
-  CartesianGrid as Grid,
   Tooltip,
   ResponsiveContainer,
   PieChart,
