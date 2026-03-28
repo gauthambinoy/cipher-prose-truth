@@ -23,6 +23,8 @@ from app.ml.detectors.ai_fingerprint import AIFingerprintDetector
 from app.ml.detectors.sentence_level import SentenceLevelDetector
 from app.ml.detectors.ai_pattern_database import AIPatternDatabaseDetector
 from app.ml.detectors.cross_reference import CrossReferenceDetector
+from app.ml.detectors.multi_model_consensus import MultiModelConsensusDetector
+from app.ml.detectors.rewrite_detector import RewriteDetector
 
 __all__ = [
     "BaseDetector",
@@ -43,4 +45,6 @@ __all__ = [
     "SentenceLevelDetector",
     "AIPatternDatabaseDetector",
     "CrossReferenceDetector",
+    "MultiModelConsensusDetector",
+    "RewriteDetector",
 ]

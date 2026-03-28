@@ -1,9 +1,13 @@
 export interface SignalScore {
   name: string;
+  signal?: string;
   score: number;
+  ai_probability?: number;
   weight: number;
   description: string;
   category: "statistical" | "linguistic" | "model" | "structural";
+  confidence?: string;
+  details?: Record<string, unknown>;
 }
 
 export interface SentenceScore {
@@ -32,6 +36,9 @@ export interface DetectionResult {
   sentences: SentenceScore[];
   gltrTokens: GLTRToken[];
   attribution: string;
+  wordCount?: number;
+  processingTimeMs?: number;
+  modelVersion?: string;
   createdAt: string;
 }
 

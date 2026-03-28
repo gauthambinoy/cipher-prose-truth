@@ -9,6 +9,10 @@ from app.ml.analyzers.citation_extractor import CitationExtractor
 from app.ml.analyzers.comparison import TextComparisonEngine
 from app.ml.analyzers.language_detector import LanguageDetector
 from app.ml.analyzers.originality_score import OriginalityScorer
+from app.ml.analyzers.document_fingerprint import DocumentFingerprinter
+from app.ml.analyzers.version_tracker import VersionTracker
+from app.ml.analyzers.writing_coach import WritingCoach
+from app.ml.analyzers.batch_processor import BatchProcessor
 
 __all__ = [
     "ReadabilityAnalyzer",
@@ -20,4 +24,8 @@ __all__ = [
     "TextComparisonEngine",
     "LanguageDetector",
     "OriginalityScorer",
+    "DocumentFingerprinter",
+    "VersionTracker",
+    "WritingCoach",
+    "BatchProcessor",
 ]

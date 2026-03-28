@@ -165,3 +165,112 @@ export interface ExportOptions {
   include_charts: boolean;
   filename?: string;
 }
+
+// --- Paraphrase Detection ---
+
+export interface SentencePair {
+  sentenceA: string;
+  sentenceB: string;
+  similarity: number;
+  indexA: number;
+  indexB: number;
+}
+
+export interface SentenceCluster {
+  label: string;
+  sentences: string[];
+  avgSimilarity: number;
+}
+
+export interface ParaphraseResult {
+  uniqueContentRatio: number;
+  flaggedPairs: SentencePair[];
+  clusters: SentenceCluster[];
+  totalSentences: number;
+  uniqueSentences: number;
+}
+
+// --- Fact Checking ---
+
+export interface Claim {
+  id: string;
+  text: string;
+  category: "statistical" | "temporal" | "entity" | "quantitative";
+  verified: boolean;
+  confidence: number;
+  source?: string;
+}
+
+export interface FactCheckResult {
+  credibilityScore: number;
+  claims: Claim[];
+  vagueAttributions: number;
+  factualDensity: number;
+  tips: string[];
+}
+
+// --- SEO Analysis ---
+
+export interface KeywordEntry {
+  keyword: string;
+  count: number;
+  density: number;
+}
+
+export interface SEOMetric {
+  name: string;
+  value: number;
+  target: string;
+  pass: boolean;
+  unit: string;
+}
+
+export interface SEORecommendation {
+  text: string;
+  priority: "high" | "medium" | "low";
+}
+
+export interface SEOResult {
+  seoScore: number;
+  grade: "A" | "B" | "C" | "D" | "F";
+  keywords: KeywordEntry[];
+  metrics: SEOMetric[];
+  recommendations: SEORecommendation[];
+}
+
+// --- Dashboard ---
+
+export interface DashboardStats {
+  totalAnalyses: number;
+  avgAiScore: number;
+  totalWords: number;
+  analysesToday: number;
+}
+
+export interface DashboardTrends {
+  scoreDistribution: { range: string; count: number }[];
+  analysesPerDay: { date: string; count: number }[];
+  classificationBreakdown: { label: string; value: number }[];
+  recentAnalyses: {
+    id: string;
+    textPreview: string;
+    score: number;
+    label: string;
+    createdAt: string;
+  }[];
+}
+
+export interface TopSignal {
+  name: string;
+  count: number;
+}
+
+// --- Notifications ---
+
+export interface AppNotification {
+  id: string;
+  message: string;
+  type: "success" | "info" | "warning" | "error";
+  timestamp: number;
+  read: boolean;
+}

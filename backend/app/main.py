@@ -97,7 +97,7 @@ def create_app() -> FastAPI:
 
 def _include_routers(app: FastAPI) -> None:
     """Import and mount all API routers under /api/v1."""
-    from app.api.routes import analytics, detection, export, health, humanization, plagiarism, realtime
+    from app.api.routes import advanced, analytics, dashboard, detection, export, health, humanization, plagiarism, realtime
 
     prefix = "/api/v1"
 
@@ -130,6 +130,16 @@ def _include_routers(app: FastAPI) -> None:
         export.router,
         prefix=prefix,
         tags=["export"],
+    )
+    app.include_router(
+        dashboard.router,
+        prefix=prefix,
+        tags=["dashboard"],
+    )
+    app.include_router(
+        advanced.router,
+        prefix=prefix,
+        tags=["advanced"],
     )
     # WebSocket routes (mounted at root, no prefix — /ws/detect)
     app.include_router(

@@ -5,7 +5,6 @@ import {
   Typography,
   Chip,
   LinearProgress,
-  Grid,
   useTheme,
 } from "@mui/material";
 import { motion } from "framer-motion";

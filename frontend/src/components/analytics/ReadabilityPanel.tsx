@@ -4,7 +4,6 @@ import {
   CardContent,
   Typography,
   Chip,
-  Grid,
   useTheme,
 } from "@mui/material";
 import MenuBookOutlinedIcon from "@mui/icons-material/MenuBookOutlined";
@@ -15,7 +14,7 @@ import {
   Bar,
   XAxis,
   YAxis,
-  CartesianGrid,
+  CartesianGrid as Grid,
   Tooltip,
   ResponsiveContainer,
   Cell,
