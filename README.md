@@ -76,7 +76,14 @@ Open **http://localhost:5173** in your browser.
 
 ## Live Demo
 
-> **TODO**: Add deployed URL here once the app is live on Vercel + HuggingFace Spaces / Render.
+[![Live Demo](https://img.shields.io/badge/LIVE_DEMO-clarityai--pied.vercel.app-6366f1?style=for-the-badge&logo=vercel&logoColor=white)](https://clarityai-pied.vercel.app)
+[![API Docs](https://img.shields.io/badge/API_DOCS-HuggingFace_Space-ff9d00?style=for-the-badge&logo=huggingface&logoColor=white)](https://gxm00009-clarityai.hf.space/api/v1/docs)
+
+| Service | URL |
+|---------|-----|
+| **Frontend** | https://clarityai-pied.vercel.app |
+| **Backend API** | https://gxm00009-clarityai.hf.space |
+| **API Docs (Swagger)** | https://gxm00009-clarityai.hf.space/api/v1/docs |
 > See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#deployment-architecture) for deployment instructions.
 
 ---
