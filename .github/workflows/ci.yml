@@ -19,24 +19,30 @@ jobs:
           cache: "pip"
           cache-dependency-path: backend/requirements.txt
 
-      - name: Install dependencies
+      - name: Install runtime dependencies
         working-directory: backend
         run: |
           pip install -r requirements.txt
           python -m spacy download en_core_web_sm
           python -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab'); nltk.download('averaged_perceptron_tagger'); nltk.download('stopwords')"
 
+      - name: Install dev dependencies
+        working-directory: backend
+        run: pip install -r requirements-dev.txt
+
       - name: Lint with ruff
         working-directory: backend
-        run: |
-          pip install ruff
-          ruff check app/ --select E,F,W --ignore E501
+        run: ruff check app/ --select E,F,W --ignore E501
 
-      - name: Test imports
+      - name: Check formatting with black
         working-directory: backend
-        run: python -c "from app.main import app; print('All imports OK')"
+        run: black --check app/ tests/
 
-  frontend-build:
+      - name: Run pytest with coverage
+        working-directory: backend
+        run: pytest tests/ --cov=app --cov-report=term-missing --cov-fail-under=50
+
+  frontend-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -52,13 +58,17 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      - name: Run vitest
+        working-directory: frontend
+        run: npm run test
+
       - name: Build
         working-directory: frontend
         run: npm run build
 
   docker-build:
     runs-on: ubuntu-latest
-    needs: [backend-test, frontend-build]
+    needs: [backend-test, frontend-test]
     steps:
       - uses: actions/checkout@v4
 

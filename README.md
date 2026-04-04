@@ -74,7 +74,23 @@ Open **http://localhost:5173** in your browser.
 
 ---
 
+## Live Demo
+
+> **TODO**: Add deployed URL here once the app is live on Vercel + HuggingFace Spaces / Render.
+> See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#deployment-architecture) for deployment instructions.
+
+---
+
 ## Screenshots
+
+> **TODO**: Add screenshots here once the app is deployed or running locally.
+> Drag images into this section or use the format below:
+>
+> ```md
+> ![Description](docs/screenshots/screenshot-name.png)
+> ```
+
+<!-- Add screenshots here -->
 
 ### Detection Dashboard
 Split-panel layout: paste text on the left, see real-time AI detection results on the right with score gauge, signal breakdown, sentence heatmap, and GLTR token visualization.
@@ -244,6 +260,15 @@ Push the `backend/` directory to a HuggingFace Space with Docker SDK.
 ### Render
 
 Connect your GitHub repo to Render. It auto-detects the Dockerfile.
+
+## Contributing
+
+Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for backend/frontend setup instructions, code standards (black, ruff, ESLint, Prettier), testing guidance, and the PR process.
+
+## Documentation
+
+- [CONTRIBUTING.md](CONTRIBUTING.md) — Development setup, code standards, testing, PR process
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — ML pipeline, backend structure, frontend architecture, database design, deployment
 
 ## License
 
