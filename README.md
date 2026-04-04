@@ -1,4 +1,4 @@
-# ClarityAI
+# Cipher Prose Truth
 
 **The World's Most Advanced AI Text Detection, Plagiarism Detection & Humanization Platform**
 
@@ -13,9 +13,9 @@
 
 ---
 
-## What Is ClarityAI?
+## What Is Cipher Prose Truth?
 
-ClarityAI is a free, open-source platform that combines three critical capabilities:
+Cipher Prose Truth is a free, open-source platform that combines three critical capabilities:
 
 1. **AI Text Detection** — 17-signal ensemble pipeline achieving 91-97% accuracy across GPT-4, Claude, Gemini, Llama, and Mistral
 2. **Plagiarism Detection** — Cross-references web, academic databases, and Wikipedia with semantic matching
