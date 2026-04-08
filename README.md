@@ -282,5 +282,3 @@ Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for ba
 MIT License. Free forever.
 
 ---
-
-Built with Claude Opus 4.6
