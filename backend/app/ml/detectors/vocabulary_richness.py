@@ -13,7 +13,6 @@ from collections import Counter
 from typing import List
 
 from app.ml.detectors.base import BaseDetector
-from app.ml.models.model_registry import ModelRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +22,7 @@ class VocabularyRichnessDetector(BaseDetector):
     @staticmethod
     def _tokenize(text: str) -> List[str]:
         import re
+
         return [w.lower() for w in re.findall(r"[a-zA-Z']+", text)]
 
     @staticmethod
@@ -49,7 +49,7 @@ class VocabularyRichnessDetector(BaseDetector):
         v = len(set(tokens))
         if n == 0 or v == 0:
             return 0.0
-        return n ** (v ** -0.172)
+        return n ** (v**-0.172)
 
     @staticmethod
     def _honores_h(tokens: List[str]) -> float:
@@ -99,9 +99,7 @@ class VocabularyRichnessDetector(BaseDetector):
         hapax_score = self._sigmoid(-(hapax - 0.5) / 0.15)
         ent_score = self._sigmoid(-(fde - 9.0) / 1.5)
 
-        ai_prob = self._clamp(
-            0.35 * yk_score + 0.30 * hapax_score + 0.35 * ent_score
-        )
+        ai_prob = self._clamp(0.35 * yk_score + 0.30 * hapax_score + 0.35 * ent_score)
         confidence = self._compute_confidence([yk_score, hapax_score, ent_score])
 
         return {

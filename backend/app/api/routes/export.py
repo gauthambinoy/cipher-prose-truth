@@ -14,8 +14,6 @@ import hashlib
 import io
 import json
 import logging
-import time
-import uuid
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -38,16 +36,24 @@ router = APIRouter()
 
 
 class ExportPDFRequest(BaseModel):
-    analysis_id: str = Field(..., description="ID of the analytics result to export")
+    analysis_id: Optional[str] = Field(None, description="ID of the analytics result to export")
+    data: Optional[Dict[str, Any]] = None
+    text: Optional[str] = None
     title: str = Field(default="ClarityAI Analysis Report")
 
 
 class ExportJSONRequest(BaseModel):
-    analysis_id: str
+    analysis_id: Optional[str] = None
+    data: Optional[Dict[str, Any]] = None
 
 
 class ExportCSVRequest(BaseModel):
-    analysis_ids: List[str] = Field(..., min_length=1, max_length=100)
+    analysis_ids: Optional[List[str]] = Field(None, min_length=1, max_length=100)
+    data: Optional[Dict[str, Any]] = None
+
+
+class ShareDataRequest(BaseModel):
+    data: Dict[str, Any] = Field(default_factory=dict)
 
 
 class ShareLinkResponse(BaseModel):
@@ -61,9 +67,7 @@ class ShareLinkResponse(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-async def _fetch_analytics_result(
-    db: AsyncSession, analysis_id: str
-) -> AnalyticsResult:
+async def _fetch_analytics_result(db: AsyncSession, analysis_id: str) -> AnalyticsResult:
     """Retrieve an AnalyticsResult or raise 404."""
     stmt = select(AnalyticsResult).where(AnalyticsResult.id == analysis_id)
     result = await db.execute(stmt)
@@ -107,15 +111,26 @@ def _build_pdf_bytes(title: str, data: Dict[str, Any]) -> bytes:
                     story.append(Paragraph(f"{prefix}<b>{key}:</b>", styles["Normal"]))
                     _render_dict(value, indent + 1)
                 elif isinstance(value, list):
-                    story.append(Paragraph(f"{prefix}<b>{key}:</b> [{len(value)} items]", styles["Normal"]))
+                    story.append(
+                        Paragraph(f"{prefix}<b>{key}:</b> [{len(value)} items]", styles["Normal"])
+                    )
                     for i, item in enumerate(value[:10]):
                         if isinstance(item, dict):
                             summary = ", ".join(f"{k}: {v}" for k, v in list(item.items())[:4])
-                            story.append(Paragraph(f"{prefix}&nbsp;&nbsp;- {summary}", styles["Normal"]))
+                            story.append(
+                                Paragraph(f"{prefix}&nbsp;&nbsp;- {summary}", styles["Normal"])
+                            )
                         else:
-                            story.append(Paragraph(f"{prefix}&nbsp;&nbsp;- {item}", styles["Normal"]))
+                            story.append(
+                                Paragraph(f"{prefix}&nbsp;&nbsp;- {item}", styles["Normal"])
+                            )
                     if len(value) > 10:
-                        story.append(Paragraph(f"{prefix}&nbsp;&nbsp;... and {len(value) - 10} more", styles["Normal"]))
+                        story.append(
+                            Paragraph(
+                                f"{prefix}&nbsp;&nbsp;... and {len(value) - 10} more",
+                                styles["Normal"],
+                            )
+                        )
                 else:
                     story.append(Paragraph(f"{prefix}<b>{key}:</b> {value}", styles["Normal"]))
 
@@ -155,8 +170,14 @@ async def export_pdf(
     db: AsyncSession = Depends(get_db),
 ):
     """Generate a PDF report for a given analysis result."""
-    record = await _fetch_analytics_result(db, request.analysis_id)
-    data = json.loads(record.results_json) if record.results_json else {}
+    analysis_id = request.analysis_id or "ad-hoc"
+    if request.data is not None:
+        data = {"input_text": request.text, "results": request.data}
+    elif request.analysis_id:
+        record = await _fetch_analytics_result(db, request.analysis_id)
+        data = json.loads(record.results_json) if record.results_json else {}
+    else:
+        raise HTTPException(status_code=422, detail="Provide either analysis_id or data")
 
     pdf_bytes = _build_pdf_bytes(request.title, data)
 
@@ -170,7 +191,7 @@ async def export_pdf(
         io.BytesIO(pdf_bytes),
         media_type=content_type,
         headers={
-            "Content-Disposition": f'attachment; filename="clarityai_report_{request.analysis_id}.pdf"'
+            "Content-Disposition": f'attachment; filename="clarityai_report_{analysis_id}.pdf"'
         },
     )
 
@@ -181,16 +202,21 @@ async def export_json(
     db: AsyncSession = Depends(get_db),
 ):
     """Export full analysis as formatted JSON."""
-    record = await _fetch_analytics_result(db, request.analysis_id)
-    data = json.loads(record.results_json) if record.results_json else {}
-
-    export = {
-        "analysis_id": record.id,
-        "analysis_type": record.analysis_type,
-        "created_at": record.created_at.isoformat() if record.created_at else None,
-        "processing_time_ms": record.processing_time_ms,
-        "results": data,
-    }
+    analysis_id = request.analysis_id or "ad-hoc"
+    if request.data is not None:
+        export = {"analysis_id": analysis_id, "results": request.data}
+    elif request.analysis_id:
+        record = await _fetch_analytics_result(db, request.analysis_id)
+        data = json.loads(record.results_json) if record.results_json else {}
+        export = {
+            "analysis_id": record.id,
+            "analysis_type": record.analysis_type,
+            "created_at": record.created_at.isoformat() if record.created_at else None,
+            "processing_time_ms": record.processing_time_ms,
+            "results": data,
+        }
+    else:
+        raise HTTPException(status_code=422, detail="Provide either analysis_id or data")
 
     formatted = json.dumps(export, indent=2, default=str)
 
@@ -198,7 +224,7 @@ async def export_json(
         io.BytesIO(formatted.encode("utf-8")),
         media_type="application/json",
         headers={
-            "Content-Disposition": f'attachment; filename="clarityai_analysis_{request.analysis_id}.json"'
+            "Content-Disposition": f'attachment; filename="clarityai_analysis_{analysis_id}.json"'
         },
     )
 
@@ -211,7 +237,15 @@ async def export_csv(
     """Export batch of analysis results as CSV."""
     rows: List[Dict[str, Any]] = []
 
-    for aid in request.analysis_ids:
+    if request.data is not None:
+        rows.append(
+            {
+                key: json.dumps(value) if isinstance(value, (dict, list)) else value
+                for key, value in request.data.items()
+            }
+        )
+
+    for aid in request.analysis_ids or []:
         stmt = select(AnalyticsResult).where(AnalyticsResult.id == aid)
         result = await db.execute(stmt)
         record = result.scalar_one_or_none()
@@ -255,10 +289,16 @@ async def export_csv(
     return StreamingResponse(
         io.BytesIO(csv_bytes),
         media_type="text/csv",
-        headers={
-            "Content-Disposition": 'attachment; filename="clarityai_batch_export.csv"'
-        },
+        headers={"Content-Disposition": 'attachment; filename="clarityai_batch_export.csv"'},
     )
+
+
+@router.post("/export/share")
+async def generate_ad_hoc_share_link(request: ShareDataRequest):
+    """Generate a lightweight share URL for frontend ad-hoc analysis data."""
+    payload = json.dumps(request.data, sort_keys=True, default=str)
+    token = _generate_share_token(payload)
+    return {"url": f"/api/v1/export/shared/{token}", "share_token": token}
 
 
 @router.get("/export/{analysis_id}/share", response_model=ShareLinkResponse)

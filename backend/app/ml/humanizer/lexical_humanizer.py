@@ -189,7 +189,6 @@ BUZZWORD_REPLACEMENTS: Dict[str, List[str]] = {
     "tangible": ["real", "concrete", "actual"],
     "testament": ["proof", "evidence"],
     "trajectory": ["path", "direction", "course"],
-    "underscore": ["stress", "highlight"],
     "underpin": ["support", "form the basis of"],
     "underpins": ["supports", "is the basis of"],
     "underpinning": ["supporting", "underlying"],
@@ -202,7 +201,6 @@ BUZZWORD_REPLACEMENTS: Dict[str, List[str]] = {
     "notwithstanding": ["despite", "in spite of"],
     "overarching": ["main", "overall", "broad"],
     "plausible": ["possible", "reasonable", "believable"],
-    "underscore": ["highlight", "stress"],
     "bolster": ["strengthen", "support", "boost"],
     "bolsters": ["strengthens", "supports"],
     "bolstering": ["strengthening", "supporting"],
@@ -279,42 +277,54 @@ CONTRACTION_MAP: Dict[str, str] = {
 # 3. AI phrase patterns  (15+ regex-based replacements)
 # ---------------------------------------------------------------------------
 AI_PHRASE_PATTERNS: List[Tuple[str, List[str]]] = [
-    (r"\bIn today'?s (?:rapidly )?(?:evolving|changing) (?:world|landscape|era)\b",
-     ["Today", "These days", "Right now"]),
-    (r"\bIt is (?:important|essential|crucial|vital) to (?:note|understand|recognize) that\b",
-     ["Note that", "Keep in mind that", "Remember that"]),
-    (r"\bThis (?:article|essay|paper|piece) (?:will )?(?:explore|delve into|examine)s?\b",
-     ["This looks at", "Here we cover", "Let's look at"]),
-    (r"\bIn (?:the )?light of (?:the )?(?:above|foregoing|this)\b",
-     ["Given this", "With that in mind", "Considering this"]),
-    (r"\bAs (?:we )?(?:can )?(?:see|observe|note),?\b",
-     ["Clearly", "As shown", "Evidently"]),
-    (r"\bIt (?:is|has been) widely (?:acknowledged|recognized|accepted) that\b",
-     ["Most people agree that", "It's generally known that"]),
-    (r"\bIn (?:order )?to (?:fully )?(?:understand|comprehend|grasp)\b",
-     ["To understand", "To get", "To make sense of"]),
-    (r"\bPlays a (?:crucial|vital|pivotal|key|significant|important) role in\b",
-     ["matters for", "helps with", "is key to"]),
-    (r"\bServes as a (?:testament|reminder|beacon|catalyst)\b",
-     ["shows", "reminds us", "proves"]),
-    (r"\bAt the (?:end of the day|heart of (?:the matter|it all))\b",
-     ["Ultimately", "In the end", "When it comes down to it"]),
-    (r"\bIt goes without saying that\b",
-     ["Obviously", "Clearly", "Of course"]),
-    (r"\bA (?:wide )?(?:variety|range|plethora|myriad) of\b",
-     ["Many", "Lots of", "All sorts of", "Various"]),
-    (r"\bIn (?:this|the) (?:regard|respect|context)\b",
-     ["Here", "On this point", "About this"]),
-    (r"\bTo (?:sum|wrap) (?:it )?up\b",
-     ["Overall", "All in all", "In short"]),
-    (r"\bOn the other hand\b",
-     ["Then again", "But", "However"]),
-    (r"\bBy and large\b",
-     ["Mostly", "Generally", "For the most part"]),
-    (r"\bFrom (?:a|the) (?:\w+ )?(?:perspective|standpoint|viewpoint)\b",
-     ["Looking at it this way", "Seen this way"]),
-    (r"\bHaving said that\b",
-     ["That said", "Still", "Even so"]),
+    (
+        r"\bIn today'?s (?:rapidly )?(?:evolving|changing) (?:world|landscape|era)\b",
+        ["Today", "These days", "Right now"],
+    ),
+    (
+        r"\bIt is (?:important|essential|crucial|vital) to (?:note|understand|recognize) that\b",
+        ["Note that", "Keep in mind that", "Remember that"],
+    ),
+    (
+        r"\bThis (?:article|essay|paper|piece) (?:will )?(?:explore|delve into|examine)s?\b",
+        ["This looks at", "Here we cover", "Let's look at"],
+    ),
+    (
+        r"\bIn (?:the )?light of (?:the )?(?:above|foregoing|this)\b",
+        ["Given this", "With that in mind", "Considering this"],
+    ),
+    (r"\bAs (?:we )?(?:can )?(?:see|observe|note),?\b", ["Clearly", "As shown", "Evidently"]),
+    (
+        r"\bIt (?:is|has been) widely (?:acknowledged|recognized|accepted) that\b",
+        ["Most people agree that", "It's generally known that"],
+    ),
+    (
+        r"\bIn (?:order )?to (?:fully )?(?:understand|comprehend|grasp)\b",
+        ["To understand", "To get", "To make sense of"],
+    ),
+    (
+        r"\bPlays a (?:crucial|vital|pivotal|key|significant|important) role in\b",
+        ["matters for", "helps with", "is key to"],
+    ),
+    (r"\bServes as a (?:testament|reminder|beacon|catalyst)\b", ["shows", "reminds us", "proves"]),
+    (
+        r"\bAt the (?:end of the day|heart of (?:the matter|it all))\b",
+        ["Ultimately", "In the end", "When it comes down to it"],
+    ),
+    (r"\bIt goes without saying that\b", ["Obviously", "Clearly", "Of course"]),
+    (
+        r"\bA (?:wide )?(?:variety|range|plethora|myriad) of\b",
+        ["Many", "Lots of", "All sorts of", "Various"],
+    ),
+    (r"\bIn (?:this|the) (?:regard|respect|context)\b", ["Here", "On this point", "About this"]),
+    (r"\bTo (?:sum|wrap) (?:it )?up\b", ["Overall", "All in all", "In short"]),
+    (r"\bOn the other hand\b", ["Then again", "But", "However"]),
+    (r"\bBy and large\b", ["Mostly", "Generally", "For the most part"]),
+    (
+        r"\bFrom (?:a|the) (?:\w+ )?(?:perspective|standpoint|viewpoint)\b",
+        ["Looking at it this way", "Seen this way"],
+    ),
+    (r"\bHaving said that\b", ["That said", "Still", "Even so"]),
 ]
 
 
@@ -352,6 +362,7 @@ class LexicalHumanizer:
         # Sort by length descending so longer phrases match first
         for buzzword in sorted(BUZZWORD_REPLACEMENTS, key=len, reverse=True):
             pattern = re.compile(re.escape(buzzword), re.IGNORECASE)
+
             def _repl(m: re.Match, bw: str = buzzword) -> str:
                 alts = BUZZWORD_REPLACEMENTS[bw]
                 replacement = self._rng.choice(alts)
@@ -359,6 +370,7 @@ class LexicalHumanizer:
                 if m.group(0)[0].isupper():
                     replacement = replacement[0].upper() + replacement[1:]
                 return replacement
+
             text = pattern.sub(_repl, text)
         return text
 
@@ -367,17 +379,21 @@ class LexicalHumanizer:
             if self._rng.random() > self.contraction_probability:
                 continue
             pattern = re.compile(re.escape(full_form), re.IGNORECASE)
+
             def _repl(m: re.Match, c: str = contracted) -> str:
                 if m.group(0)[0].isupper():
                     return c[0].upper() + c[1:]
                 return c
+
             text = pattern.sub(_repl, text)
         return text
 
     def _replace_ai_phrases(self, text: str) -> str:
         for pattern_str, replacements in AI_PHRASE_PATTERNS:
             pattern = re.compile(pattern_str, re.IGNORECASE)
+
             def _repl(m: re.Match, alts: List[str] = replacements) -> str:
                 return self._rng.choice(alts)
+
             text = pattern.sub(_repl, text)
         return text

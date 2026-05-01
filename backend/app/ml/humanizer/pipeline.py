@@ -4,11 +4,10 @@ lexical, structural, and LLM layers until the AI detection score drops
 below a target threshold, while preserving meaning and originality.
 """
 
-import asyncio
 import logging
 import time
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from dataclasses import dataclass
+from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -66,18 +65,21 @@ class AdversarialHumanizationPipeline:
     def _get_lexical(self):
         if self._lexical is None:
             from app.ml.humanizer.lexical_humanizer import LexicalHumanizer
+
             self._lexical = LexicalHumanizer()
         return self._lexical
 
     def _get_structural(self):
         if self._structural is None:
             from app.ml.humanizer.structural_humanizer import StructuralHumanizer
+
             self._structural = StructuralHumanizer()
         return self._structural
 
     def _get_ollama(self):
         if self._ollama is None:
             from app.ml.humanizer.ollama_humanizer import OllamaHumanizer
+
             self._ollama = OllamaHumanizer()
         return self._ollama
 
@@ -85,6 +87,7 @@ class AdversarialHumanizationPipeline:
         if self._similarity_model is None:
             try:
                 from sentence_transformers import SentenceTransformer
+
                 self._similarity_model = SentenceTransformer("all-MiniLM-L6-v2")
                 logger.info("Sentence similarity model loaded.")
             except Exception as exc:
@@ -106,9 +109,9 @@ class AdversarialHumanizationPipeline:
             # if a full pipeline exists; otherwise use the meta-learner with
             # whatever signals we can gather.
             try:
-                from app.ml.detectors.base import BaseDetector
                 # Try importing a detection pipeline if one exists
                 from app.ml.ensemble import detection_pipeline  # type: ignore
+
                 results = detection_pipeline.analyze(text)
                 if isinstance(results, dict) and "overall_score" in results:
                     return float(results["overall_score"])
@@ -138,12 +141,13 @@ class AdversarialHumanizationPipeline:
 
         # Sentence length variance (low variance = more AI-like)
         import re
-        sentences = re.split(r'[.!?]+', text)
+
+        sentences = re.split(r"[.!?]+", text)
         sentences = [s.strip() for s in sentences if s.strip()]
         if len(sentences) > 1:
             lens = [len(s.split()) for s in sentences]
             mean_len = sum(lens) / len(lens)
-            variance = sum((l - mean_len) ** 2 for l in lens) / len(lens)
+            variance = sum((length - mean_len) ** 2 for length in lens) / len(lens)
         else:
             variance = 0.0
 
@@ -171,6 +175,7 @@ class AdversarialHumanizationPipeline:
         try:
             embeddings = model.encode([text_a, text_b], convert_to_numpy=True)
             import numpy as np
+
             cos_sim = float(
                 np.dot(embeddings[0], embeddings[1])
                 / (np.linalg.norm(embeddings[0]) * np.linalg.norm(embeddings[1]) + 1e-10)
@@ -200,6 +205,7 @@ class AdversarialHumanizationPipeline:
         """
         try:
             from app.ml.plagiarism.exact_match import ExactMatcher
+
             matcher = ExactMatcher()
             result = matcher.compare(original, humanized)
             return result.get("jaccard_similarity", 0.0)
@@ -227,11 +233,13 @@ class AdversarialHumanizationPipeline:
 
         # ---- Baseline score ----
         original_score = await self._score_text(text)
-        score_timeline.append({
-            "stage": "baseline",
-            "score": round(original_score, 4),
-            "elapsed_s": 0.0,
-        })
+        score_timeline.append(
+            {
+                "stage": "baseline",
+                "score": round(original_score, 4),
+                "elapsed_s": 0.0,
+            }
+        )
 
         current_text = text
 
@@ -255,41 +263,47 @@ class AdversarialHumanizationPipeline:
         lexical = self._get_lexical()
         current_text = lexical.humanize(current_text)
         layer1_score = await self._score_text(current_text)
-        score_timeline.append({
-            "stage": "lexical",
-            "score": round(layer1_score, 4),
-            "elapsed_s": round(time.time() - start_time, 2),
-        })
+        score_timeline.append(
+            {
+                "stage": "lexical",
+                "score": round(layer1_score, 4),
+                "elapsed_s": round(time.time() - start_time, 2),
+            }
+        )
 
         # ---- Layer 2: Structural ----
         structural = self._get_structural()
         current_text = structural.humanize(current_text, style=style)
         layer2_score = await self._score_text(current_text)
-        score_timeline.append({
-            "stage": "structural",
-            "score": round(layer2_score, 4),
-            "elapsed_s": round(time.time() - start_time, 2),
-        })
+        score_timeline.append(
+            {
+                "stage": "structural",
+                "score": round(layer2_score, 4),
+                "elapsed_s": round(time.time() - start_time, 2),
+            }
+        )
 
         # ---- Layer 3: Ollama LLM rewrite ----
         ollama = self._get_ollama()
         current_text = await ollama.humanize(
-            current_text, style=style, model=model, temperature=self.base_temperature,
+            current_text,
+            style=style,
+            model=model,
+            temperature=self.base_temperature,
         )
         layer3_score = await self._score_text(current_text)
-        score_timeline.append({
-            "stage": "ollama",
-            "score": round(layer3_score, 4),
-            "elapsed_s": round(time.time() - start_time, 2),
-        })
+        score_timeline.append(
+            {
+                "stage": "ollama",
+                "score": round(layer3_score, 4),
+                "elapsed_s": round(time.time() - start_time, 2),
+            }
+        )
 
         # ---- Adversarial loop ----
         iteration = 0
         current_score = layer3_score
-        while (
-            current_score > self.target_ai_score
-            and iteration < self.max_iterations
-        ):
+        while current_score > self.target_ai_score and iteration < self.max_iterations:
             iteration += 1
             temp = min(self.base_temperature + (iteration * 0.05), 1.2)
 
@@ -298,7 +312,10 @@ class AdversarialHumanizationPipeline:
 
             # Re-apply Ollama with increased temperature
             current_text = await ollama.humanize(
-                current_text, style=style, model=model, temperature=temp,
+                current_text,
+                style=style,
+                model=model,
+                temperature=temp,
             )
 
             # Check meaning preservation
@@ -307,28 +324,29 @@ class AdversarialHumanizationPipeline:
                 logger.warning(
                     "Iteration %d: meaning similarity dropped to %.3f (below %.3f). "
                     "Stopping to preserve meaning.",
-                    iteration, similarity, self.similarity_threshold,
+                    iteration,
+                    similarity,
+                    self.similarity_threshold,
                 )
                 break
 
             current_score = await self._score_text(current_text)
-            score_timeline.append({
-                "stage": f"adversarial_iter_{iteration}",
-                "score": round(current_score, 4),
-                "temperature": round(temp, 3),
-                "similarity": round(similarity, 4),
-                "elapsed_s": round(time.time() - start_time, 2),
-            })
+            score_timeline.append(
+                {
+                    "stage": f"adversarial_iter_{iteration}",
+                    "score": round(current_score, 4),
+                    "temperature": round(temp, 3),
+                    "similarity": round(similarity, 4),
+                    "elapsed_s": round(time.time() - start_time, 2),
+                }
+            )
 
         # ---- Post-humanization quality checks ----
         final_similarity = self._compute_similarity(text, current_text)
         plag_score = await self._check_plagiarism(text, current_text)
         final_score = current_score
 
-        targets_met = (
-            final_score <= self.target_ai_score
-            and plag_score <= self.target_plag_score
-        )
+        targets_met = final_score <= self.target_ai_score and plag_score <= self.target_plag_score
 
         quality_metrics = {
             "meaning_similarity": round(final_similarity, 4),

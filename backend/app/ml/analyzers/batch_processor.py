@@ -6,7 +6,6 @@ and aggregate the results with statistics and distribution data.
 from __future__ import annotations
 
 import logging
-import math
 import re
 import time
 import uuid
@@ -34,7 +33,7 @@ class BatchProcessor:
         if len(words) < 10:
             return 0.5
 
-        sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+        sentences = re.split(r"(?<=[.!?])\s+", text.strip())
         sentences = [s for s in sentences if len(s.strip()) > 5]
         if not sentences:
             return 0.5
@@ -43,7 +42,9 @@ class BatchProcessor:
         sent_lengths = [len(s.split()) for s in sentences]
         mean_len = sum(sent_lengths) / len(sent_lengths)
         if mean_len > 0:
-            std_len = (sum((l - mean_len) ** 2 for l in sent_lengths) / len(sent_lengths)) ** 0.5
+            std_len = (
+                sum((length - mean_len) ** 2 for length in sent_lengths) / len(sent_lengths)
+            ) ** 0.5
             cov = std_len / mean_len
         else:
             cov = 0
@@ -76,14 +77,16 @@ class BatchProcessor:
         if len(words) < 10:
             return "insufficient_text"
 
-        sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+        sentences = re.split(r"(?<=[.!?])\s+", text.strip())
         sentences = [s for s in sentences if len(s.strip()) > 5]
 
         # Compute each signal
         sent_lengths = [len(s.split()) for s in sentences] if sentences else [0]
         mean_len = sum(sent_lengths) / max(len(sent_lengths), 1)
         if mean_len > 0:
-            std_len = (sum((l - mean_len) ** 2 for l in sent_lengths) / len(sent_lengths)) ** 0.5
+            std_len = (
+                sum((length - mean_len) ** 2 for length in sent_lengths) / len(sent_lengths)
+            ) ** 0.5
             cov = std_len / mean_len
         else:
             cov = 0
@@ -133,20 +136,22 @@ class BatchProcessor:
         scores: List[float] = []
 
         for idx, (text, filename) in enumerate(zip(texts, filenames)):
-            word_count = len(re.findall(r'\S+', text))
+            word_count = len(re.findall(r"\S+", text))
             ai_score = self._quick_ai_score(text)
             classification = self._classify(ai_score)
             top_sig = self._top_signal(text)
 
             scores.append(ai_score)
-            results.append({
-                "index": idx,
-                "filename": filename,
-                "word_count": word_count,
-                "ai_score": ai_score,
-                "classification": classification,
-                "top_signal": top_sig,
-            })
+            results.append(
+                {
+                    "index": idx,
+                    "filename": filename,
+                    "word_count": word_count,
+                    "ai_score": ai_score,
+                    "classification": classification,
+                    "top_signal": top_sig,
+                }
+            )
 
         # Sort by AI score descending (most suspicious first)
         results.sort(key=lambda r: r["ai_score"], reverse=True)

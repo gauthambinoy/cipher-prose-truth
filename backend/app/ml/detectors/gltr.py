@@ -28,7 +28,10 @@ class GLTRDetector(BaseDetector):
     def _analyze_tokens(text: str, model, tokenizer) -> List[Dict]:
         device = next(model.parameters()).device
         enc = tokenizer(
-            text, return_tensors="pt", truncation=True, max_length=MAX_LENGTH,
+            text,
+            return_tensors="pt",
+            truncation=True,
+            max_length=MAX_LENGTH,
         ).to(device)
         input_ids = enc["input_ids"]
         seq_len = input_ids.size(1)
@@ -62,15 +65,17 @@ class GLTRDetector(BaseDetector):
             else:
                 bucket, color = "rare", "purple"
 
-            token_data.append({
-                "token": token_str,
-                "token_id": tid,
-                "rank": rank,
-                "probability": round(token_prob, 6),
-                "entropy": round(entropy, 4),
-                "bucket": bucket,
-                "color": color,
-            })
+            token_data.append(
+                {
+                    "token": token_str,
+                    "token_id": tid,
+                    "rank": rank,
+                    "probability": round(token_prob, 6),
+                    "entropy": round(entropy, 4),
+                    "bucket": bucket,
+                    "color": color,
+                }
+            )
         return token_data
 
     async def analyze(self, text: str) -> dict:
@@ -95,9 +100,7 @@ class GLTRDetector(BaseDetector):
         mean_entropy = float(np.mean([t["entropy"] for t in token_data]))
 
         confidence = (
-            "high" if abs(ai_prob - 0.5) > 0.3
-            else "medium" if abs(ai_prob - 0.5) > 0.15
-            else "low"
+            "high" if abs(ai_prob - 0.5) > 0.3 else "medium" if abs(ai_prob - 0.5) > 0.15 else "low"
         )
 
         return {

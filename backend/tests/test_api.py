@@ -16,6 +16,7 @@ import pytest
 # /api/v1/health
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_health_returns_200(client):
     """Health endpoint must return HTTP 200 with a 'healthy' status."""
@@ -29,8 +30,13 @@ async def test_health_response_schema(client):
     resp = await client.get("/api/v1/health")
     body = resp.json()
     required_fields = {
-        "status", "model_version", "uptime_seconds",
-        "loaded_models", "ollama_available", "database", "timestamp",
+        "status",
+        "model_version",
+        "uptime_seconds",
+        "loaded_models",
+        "ollama_available",
+        "database",
+        "timestamp",
     }
     assert required_fields.issubset(body.keys())
 
@@ -45,6 +51,7 @@ async def test_health_status_value(client):
 # ---------------------------------------------------------------------------
 # /api/v1/history
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_history_returns_200(client):
@@ -83,6 +90,7 @@ async def test_history_invalid_page_raises_422(client):
 # /api/v1/detect — validation only (no ML model required)
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_detect_empty_text_returns_422(client):
     """Sending an empty text string must return 422."""
@@ -110,6 +118,7 @@ async def test_detect_missing_text_returns_422(client):
 # ---------------------------------------------------------------------------
 # OpenAPI schema sanity
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_openapi_schema_accessible(client):

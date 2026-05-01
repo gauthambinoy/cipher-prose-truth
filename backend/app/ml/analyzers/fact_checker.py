@@ -18,9 +18,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 # Percentages: "45%", "45.2 percent", "45 per cent"
-_PCT_RE = re.compile(
-    r"\b(\d+(?:\.\d+)?)\s*(?:%|percent|per\s*cent)\b", re.IGNORECASE
-)
+_PCT_RE = re.compile(r"\b(\d+(?:\.\d+)?)\s*(?:%|percent|per\s*cent)\b", re.IGNORECASE)
 
 # Dates: "January 2024", "01/15/2024", "2024-01-15", "15th of March, 2023"
 _DATE_RE = re.compile(
@@ -96,11 +94,13 @@ def _load_spacy():
     """Lazy-load spaCy for NER."""
     try:
         import spacy
+
         try:
             nlp = spacy.load("en_core_web_sm")
         except OSError:
             logger.warning("spaCy model 'en_core_web_sm' not found. Downloading...")
             from spacy.cli import download
+
             download("en_core_web_sm")
             nlp = spacy.load("en_core_web_sm")
         return nlp
@@ -140,39 +140,45 @@ class FactChecker:
             span = (m.start(), m.end())
             if span not in seen_spans:
                 seen_spans.add(span)
-                claims.append({
-                    "text": m.group().strip(),
-                    "category": "statistical",
-                    "start": m.start(),
-                    "end": m.end(),
-                    "verifiable": True,
-                })
+                claims.append(
+                    {
+                        "text": m.group().strip(),
+                        "category": "statistical",
+                        "start": m.start(),
+                        "end": m.end(),
+                        "verifiable": True,
+                    }
+                )
 
         # Dates
         for m in _DATE_RE.finditer(text):
             span = (m.start(), m.end())
             if span not in seen_spans:
                 seen_spans.add(span)
-                claims.append({
-                    "text": m.group().strip(),
-                    "category": "temporal",
-                    "start": m.start(),
-                    "end": m.end(),
-                    "verifiable": True,
-                })
+                claims.append(
+                    {
+                        "text": m.group().strip(),
+                        "category": "temporal",
+                        "start": m.start(),
+                        "end": m.end(),
+                        "verifiable": True,
+                    }
+                )
 
         # Quantities with units
         for m in _QUANTITY_RE.finditer(text):
             span = (m.start(), m.end())
             if span not in seen_spans:
                 seen_spans.add(span)
-                claims.append({
-                    "text": m.group().strip(),
-                    "category": "quantitative",
-                    "start": m.start(),
-                    "end": m.end(),
-                    "verifiable": True,
-                })
+                claims.append(
+                    {
+                        "text": m.group().strip(),
+                        "category": "quantitative",
+                        "start": m.start(),
+                        "end": m.end(),
+                        "verifiable": True,
+                    }
+                )
 
         return claims
 
@@ -186,9 +192,20 @@ class FactChecker:
         claims: List[Dict[str, Any]] = []
         # Entity types that represent factual claims
         target_labels = {
-            "PERSON", "ORG", "GPE", "LOC", "DATE", "MONEY",
-            "QUANTITY", "PERCENT", "EVENT", "PRODUCT", "FAC",
-            "NORP", "LAW", "WORK_OF_ART",
+            "PERSON",
+            "ORG",
+            "GPE",
+            "LOC",
+            "DATE",
+            "MONEY",
+            "QUANTITY",
+            "PERCENT",
+            "EVENT",
+            "PRODUCT",
+            "FAC",
+            "NORP",
+            "LAW",
+            "WORK_OF_ART",
         }
 
         for ent in doc.ents:
@@ -199,14 +216,16 @@ class FactChecker:
                 elif ent.label_ in {"MONEY", "QUANTITY", "PERCENT"}:
                     category = "quantitative"
 
-                claims.append({
-                    "text": ent.text.strip(),
-                    "category": category,
-                    "entity_type": ent.label_,
-                    "start": ent.start_char,
-                    "end": ent.end_char,
-                    "verifiable": True,
-                })
+                claims.append(
+                    {
+                        "text": ent.text.strip(),
+                        "category": category,
+                        "entity_type": ent.label_,
+                        "start": ent.start_char,
+                        "end": ent.end_char,
+                        "verifiable": True,
+                    }
+                )
 
         return claims
 
@@ -223,17 +242,19 @@ class FactChecker:
                 sentence_end = sentence_end + 1 if sentence_end != -1 else len(text)
                 context = text[sentence_start:sentence_end].strip()
 
-                vague_claims.append({
-                    "text": m.group().strip(),
-                    "context": context[:300],
-                    "start": m.start(),
-                    "end": m.end(),
-                    "issue": "vague_attribution",
-                    "suggestion": (
-                        "Add a specific citation, study name, author, "
-                        "or data source to support this claim."
-                    ),
-                })
+                vague_claims.append(
+                    {
+                        "text": m.group().strip(),
+                        "context": context[:300],
+                        "start": m.start(),
+                        "end": m.end(),
+                        "issue": "vague_attribution",
+                        "suggestion": (
+                            "Add a specific citation, study name, author, "
+                            "or data source to support this claim."
+                        ),
+                    }
+                )
 
         return vague_claims
 

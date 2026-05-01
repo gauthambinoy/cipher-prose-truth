@@ -7,11 +7,11 @@ from __future__ import annotations
 import logging
 import time
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -70,12 +70,9 @@ async def health_check():
     loaded_count = 0
     try:
         from app.ml.models.model_registry import ModelRegistry
+
         registry = ModelRegistry()
-        loaded_count = (
-            len(registry._models)
-            + len(registry._tokenizers)
-            + len(registry._pipelines)
-        )
+        loaded_count = len(registry._models) + len(registry._tokenizers) + len(registry._pipelines)
     except Exception:
         pass
 
@@ -111,10 +108,16 @@ async def analysis_history(
         description="Column to sort by",
     ),
     min_score: Optional[float] = Query(
-        default=None, ge=0.0, le=1.0, description="Minimum AI score filter",
+        default=None,
+        ge=0.0,
+        le=1.0,
+        description="Minimum AI score filter",
     ),
     max_score: Optional[float] = Query(
-        default=None, ge=0.0, le=1.0, description="Maximum AI score filter",
+        default=None,
+        ge=0.0,
+        le=1.0,
+        description="Maximum AI score filter",
     ),
     db: AsyncSession = Depends(get_db),
 ):
@@ -151,12 +154,7 @@ async def analysis_history(
 
     # Fetch page
     offset = (page - 1) * limit
-    data_stmt = (
-        base_filter
-        .order_by(desc(sort_col))
-        .offset(offset)
-        .limit(limit)
-    )
+    data_stmt = base_filter.order_by(desc(sort_col)).offset(offset).limit(limit)
     data_result = await db.execute(data_stmt)
     rows = data_result.scalars().all()
 

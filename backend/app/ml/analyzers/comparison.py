@@ -10,7 +10,7 @@ import difflib
 import math
 import re
 from collections import Counter
-from typing import Any, Dict, List, Set, Tuple
+from typing import Any, Dict, List, Set
 
 
 class TextComparisonEngine:
@@ -29,9 +29,7 @@ class TextComparisonEngine:
         structural = self._structural_comparison(text_a, text_b, words_a, words_b)
 
         # Overall similarity: weighted combination
-        similarity_score = round(
-            cosine_sim * 0.4 + jaccard_sim * 0.3 + edit_ratio * 0.3, 4
-        )
+        similarity_score = round(cosine_sim * 0.4 + jaccard_sim * 0.3 + edit_ratio * 0.3, 4)
 
         return {
             "similarity_score": similarity_score,
@@ -59,8 +57,8 @@ class TextComparisonEngine:
             return 0.0
 
         dot_product = sum(counter_a.get(w, 0) * counter_b.get(w, 0) for w in all_words)
-        mag_a = math.sqrt(sum(v ** 2 for v in counter_a.values()))
-        mag_b = math.sqrt(sum(v ** 2 for v in counter_b.values()))
+        mag_a = math.sqrt(sum(v**2 for v in counter_a.values()))
+        mag_b = math.sqrt(sum(v**2 for v in counter_b.values()))
 
         if mag_a == 0 or mag_b == 0:
             return 0.0
@@ -93,12 +91,8 @@ class TextComparisonEngine:
         seen_phrases: Set[str] = set()
 
         for n in range(max_n, min_n - 1, -1):
-            ngrams_a = set(
-                tuple(words_a[i : i + n]) for i in range(len(words_a) - n + 1)
-            )
-            ngrams_b = set(
-                tuple(words_b[i : i + n]) for i in range(len(words_b) - n + 1)
-            )
+            ngrams_a = set(tuple(words_a[i : i + n]) for i in range(len(words_a) - n + 1))
+            ngrams_b = set(tuple(words_b[i : i + n]) for i in range(len(words_b) - n + 1))
             shared = ngrams_a & ngrams_b
             for ng in shared:
                 phrase = " ".join(ng)
@@ -106,10 +100,12 @@ class TextComparisonEngine:
                 if any(phrase in longer for longer in seen_phrases):
                     continue
                 seen_phrases.add(phrase)
-                common.append({
-                    "phrase": phrase,
-                    "word_count": n,
-                })
+                common.append(
+                    {
+                        "phrase": phrase,
+                        "word_count": n,
+                    }
+                )
 
         # Sort by phrase length descending and limit
         common.sort(key=lambda x: x["word_count"], reverse=True)
@@ -124,8 +120,12 @@ class TextComparisonEngine:
         differ = difflib.unified_diff(lines_a, lines_b, lineterm="", n=3)
         diff_lines = list(differ)
 
-        additions = sum(1 for l in diff_lines if l.startswith("+") and not l.startswith("+++"))
-        deletions = sum(1 for l in diff_lines if l.startswith("-") and not l.startswith("---"))
+        additions = sum(
+            1 for line in diff_lines if line.startswith("+") and not line.startswith("+++")
+        )
+        deletions = sum(
+            1 for line in diff_lines if line.startswith("-") and not line.startswith("---")
+        )
         modifications = min(additions, deletions)
 
         return {
@@ -157,7 +157,9 @@ class TextComparisonEngine:
 
         vocab_a = set(words_a)
         vocab_b = set(words_b)
-        vocab_overlap = len(vocab_a & vocab_b) / len(vocab_a | vocab_b) if (vocab_a | vocab_b) else 0
+        vocab_overlap = (
+            len(vocab_a & vocab_b) / len(vocab_a | vocab_b) if (vocab_a | vocab_b) else 0
+        )
 
         avg_sent_len_a = (len(words_a) / len(sentences_a)) if sentences_a else 0
         avg_sent_len_b = (len(words_b) / len(sentences_b)) if sentences_b else 0

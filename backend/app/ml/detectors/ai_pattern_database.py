@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import re
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Dict, List, Tuple
 
 from app.ml.detectors.base import BaseDetector
@@ -23,9 +23,11 @@ logger = logging.getLogger(__name__)
 # Pattern Categories
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class PatternEntry:
     """A single pattern with its regex and metadata."""
+
     pattern: str
     category: str
     model: str = "generic"
@@ -35,42 +37,120 @@ class PatternEntry:
 # ── AI Signature Phrases by Model ──────────────────────────────────────────
 
 GPT4_PHRASES: List[str] = [
-    "delve", "tapestry", "multifaceted", "nuanced", "comprehensive",
-    "landscape", "paradigm", "intricate", "pivotal", "holistic",
-    "robust", "streamline", "leverage", "underscores", "realm",
-    "encompasses", "facilitates", "navigating", "fostering", "underpinning",
-    "meticulous", "commendable", "noteworthy", "paramount", "indispensable",
-    "groundbreaking", "cutting-edge", "game-changer", "synergy", "ecosystem",
+    "delve",
+    "tapestry",
+    "multifaceted",
+    "nuanced",
+    "comprehensive",
+    "landscape",
+    "paradigm",
+    "intricate",
+    "pivotal",
+    "holistic",
+    "robust",
+    "streamline",
+    "leverage",
+    "underscores",
+    "realm",
+    "encompasses",
+    "facilitates",
+    "navigating",
+    "fostering",
+    "underpinning",
+    "meticulous",
+    "commendable",
+    "noteworthy",
+    "paramount",
+    "indispensable",
+    "groundbreaking",
+    "cutting-edge",
+    "game-changer",
+    "synergy",
+    "ecosystem",
 ]
 
 CLAUDE_PHRASES: List[str] = [
-    "straightforward", "certainly", "absolutely", "happy to help",
-    "great question", "fascinating", "thoughtful", "I appreciate",
-    "nuance", "context", "perspective", "I'd be glad",
-    "I want to be transparent", "I should note", "it's worth mentioning",
-    "that said", "with that in mind", "to be fair", "I think it's important",
-    "let me think about", "that's a really", "I'd push back",
-    "I'm not sure I agree", "there's a tension", "helpfully",
+    "straightforward",
+    "certainly",
+    "absolutely",
+    "happy to help",
+    "great question",
+    "fascinating",
+    "thoughtful",
+    "I appreciate",
+    "nuance",
+    "context",
+    "perspective",
+    "I'd be glad",
+    "I want to be transparent",
+    "I should note",
+    "it's worth mentioning",
+    "that said",
+    "with that in mind",
+    "to be fair",
+    "I think it's important",
+    "let me think about",
+    "that's a really",
+    "I'd push back",
+    "I'm not sure I agree",
+    "there's a tension",
+    "helpfully",
 ]
 
 GEMINI_PHRASES: List[str] = [
-    "comprehensive overview", "explore", "aspects", "key takeaways",
-    "in-depth", "insights", "strategies", "optimize", "enhance",
-    "benefits", "considerations", "implementation", "deep dive",
-    "actionable", "breakdown", "best practices", "use cases",
-    "step-by-step", "pros and cons", "quick summary",
-    "bottom line", "here's the deal", "main points", "worth highlighting",
+    "comprehensive overview",
+    "explore",
+    "aspects",
+    "key takeaways",
+    "in-depth",
+    "insights",
+    "strategies",
+    "optimize",
+    "enhance",
+    "benefits",
+    "considerations",
+    "implementation",
+    "deep dive",
+    "actionable",
+    "breakdown",
+    "best practices",
+    "use cases",
+    "step-by-step",
+    "pros and cons",
+    "quick summary",
+    "bottom line",
+    "here's the deal",
+    "main points",
+    "worth highlighting",
     "crucial to understand",
 ]
 
 LLAMA_PHRASES: List[str] = [
-    "sure thing", "let's get started", "no problem", "gotcha",
-    "awesome", "cool", "stuff", "basically", "pretty much",
-    "kind of", "gonna", "wanna", "lemme", "tbh",
-    "let me break it down", "here's the thing", "real quick",
-    "super important", "big deal", "that being said",
-    "at the end of the day", "long story short", "just to be clear",
-    "I'd say", "for what it's worth",
+    "sure thing",
+    "let's get started",
+    "no problem",
+    "gotcha",
+    "awesome",
+    "cool",
+    "stuff",
+    "basically",
+    "pretty much",
+    "kind of",
+    "gonna",
+    "wanna",
+    "lemme",
+    "tbh",
+    "let me break it down",
+    "here's the thing",
+    "real quick",
+    "super important",
+    "big deal",
+    "that being said",
+    "at the end of the day",
+    "long story short",
+    "just to be clear",
+    "I'd say",
+    "for what it's worth",
 ]
 
 
@@ -83,9 +163,19 @@ STRUCTURAL_PATTERNS: List[PatternEntry] = [
     PatternEntry(r"^\s*-\s+\*\*[^*]+\*\*:", "bullet_bold", "generic", 1.2),
     PatternEntry(r"^\s*[-*]\s+[A-Z][a-z]+:", "bullet_pattern", "generic", 1.0),
     # "Let me..." / "Here's..." openers
-    PatternEntry(r"\blet me\b(?:\s+\w+){1,3}\b(?:explain|clarify|break|walk|help|show|elaborate|outline)\b", "ai_opener", "generic", 1.5),
+    PatternEntry(
+        r"\blet me\b(?:\s+\w+){1,3}\b(?:explain|clarify|break|walk|help|show|elaborate|outline)\b",
+        "ai_opener",
+        "generic",
+        1.5,
+    ),
     PatternEntry(r"\bhere(?:'s| is| are)\b", "ai_opener", "generic", 0.7),
-    PatternEntry(r"\bhere(?:'s| is) (?:a |an )?(?:quick|brief|comprehensive|detailed)", "ai_opener", "generic", 1.3),
+    PatternEntry(
+        r"\bhere(?:'s| is) (?:a |an )?(?:quick|brief|comprehensive|detailed)",
+        "ai_opener",
+        "generic",
+        1.3,
+    ),
     # Markdown-style formatting in plain text
     PatternEntry(r"\*\*[^*]{3,50}\*\*", "markdown_bold", "generic", 1.0),
     PatternEntry(r"#{1,3}\s+\w+", "markdown_header", "generic", 1.2),
@@ -125,18 +215,48 @@ TRANSITION_PATTERNS: List[PatternEntry] = [
 # ── Opening Sentence Patterns ─────────────────────────────────────────────
 
 OPENING_PATTERNS: List[PatternEntry] = [
-    PatternEntry(r"^in today(?:'s| s) (?:rapidly )?(?:evolving|changing|digital|modern|fast-paced|interconnected)", "opening", "generic", 2.0),
+    PatternEntry(
+        r"^in today(?:'s| s) (?:rapidly )?(?:evolving|changing|digital|modern|fast-paced|interconnected)",
+        "opening",
+        "generic",
+        2.0,
+    ),
     PatternEntry(r"^when it comes to\b", "opening", "generic", 1.5),
-    PatternEntry(r"^one of the most (?:important|significant|common|popular|effective|powerful|challenging)", "opening", "generic", 1.8),
+    PatternEntry(
+        r"^one of the most (?:important|significant|common|popular|effective|powerful|challenging)",
+        "opening",
+        "generic",
+        1.8,
+    ),
     PatternEntry(r"^in (?:the |an )?(?:era|age|world) of\b", "opening", "generic", 1.8),
-    PatternEntry(r"^as (?:we|you) (?:navigate|explore|delve|dive|embark)", "opening", "generic", 1.7),
-    PatternEntry(r"^(?:the|a) (?:concept|idea|notion|question|topic|subject) of\b", "opening", "generic", 1.3),
-    PatternEntry(r"^have you ever (?:wondered|thought|considered|asked)", "opening", "generic", 1.5),
-    PatternEntry(r"^in (?:the )?(?:realm|domain|field|world|sphere) of\b", "opening", "generic", 1.8),
-    PatternEntry(r"^throughout (?:history|the ages|the years|human history)\b", "opening", "generic", 1.5),
+    PatternEntry(
+        r"^as (?:we|you) (?:navigate|explore|delve|dive|embark)", "opening", "generic", 1.7
+    ),
+    PatternEntry(
+        r"^(?:the|a) (?:concept|idea|notion|question|topic|subject) of\b", "opening", "generic", 1.3
+    ),
+    PatternEntry(
+        r"^have you ever (?:wondered|thought|considered|asked)", "opening", "generic", 1.5
+    ),
+    PatternEntry(
+        r"^in (?:the )?(?:realm|domain|field|world|sphere) of\b", "opening", "generic", 1.8
+    ),
+    PatternEntry(
+        r"^throughout (?:history|the ages|the years|human history)\b", "opening", "generic", 1.5
+    ),
     PatternEntry(r"^it(?:'s| is) no (?:secret|surprise|exaggeration)\b", "opening", "generic", 1.6),
-    PatternEntry(r"^(?:understanding|exploring|examining|navigating) (?:the )?\w+\b", "opening", "generic", 1.2),
-    PatternEntry(r"^the (?:rise|emergence|evolution|importance|significance|impact) of\b", "opening", "generic", 1.6),
+    PatternEntry(
+        r"^(?:understanding|exploring|examining|navigating) (?:the )?\w+\b",
+        "opening",
+        "generic",
+        1.2,
+    ),
+    PatternEntry(
+        r"^the (?:rise|emergence|evolution|importance|significance|impact) of\b",
+        "opening",
+        "generic",
+        1.6,
+    ),
 ]
 
 
@@ -150,7 +270,12 @@ CLOSING_PATTERNS: List[PatternEntry] = [
     PatternEntry(r"\bto (?:sum|wrap) (?:it )?up\b", "closing", "generic", 1.5),
     PatternEntry(r"\bin (?:a )?nutshell\b", "closing", "generic", 1.3),
     PatternEntry(r"\ball (?:things|in all)\b", "closing", "generic", 0.9),
-    PatternEntry(r"\bby (?:embracing|adopting|leveraging|understanding|implementing)\b", "closing", "generic", 1.4),
+    PatternEntry(
+        r"\bby (?:embracing|adopting|leveraging|understanding|implementing)\b",
+        "closing",
+        "generic",
+        1.4,
+    ),
     PatternEntry(r"\bthe (?:key|bottom) line (?:is|here)\b", "closing", "generic", 1.3),
     PatternEntry(r"\bmoving forward\b", "closing", "generic", 1.2),
     PatternEntry(r"\bas we (?:move|look|go) forward\b", "closing", "generic", 1.5),
@@ -163,17 +288,41 @@ CLOSING_PATTERNS: List[PatternEntry] = [
 HEDGING_PATTERNS: List[PatternEntry] = [
     PatternEntry(r"\bit(?:'s| is) important to note that\b", "hedging", "generic", 1.8),
     PatternEntry(r"\bit should be noted (?:that )?\b", "hedging", "generic", 1.6),
-    PatternEntry(r"\bit(?:'s| is) worth (?:noting|mentioning|pointing out)\b", "hedging", "generic", 1.7),
-    PatternEntry(r"\bwhile (?:it(?:'s| is) )?(?:true|possible|likely) that\b", "hedging", "generic", 1.3),
+    PatternEntry(
+        r"\bit(?:'s| is) worth (?:noting|mentioning|pointing out)\b", "hedging", "generic", 1.7
+    ),
+    PatternEntry(
+        r"\bwhile (?:it(?:'s| is) )?(?:true|possible|likely) that\b", "hedging", "generic", 1.3
+    ),
     PatternEntry(r"\bgenerally speaking\b", "hedging", "generic", 1.2),
     PatternEntry(r"\bthat (?:being )?said\b", "hedging", "generic", 1.0),
-    PatternEntry(r"\bhowever,? it(?:'s| is) (?:important|crucial|essential|worth)\b", "hedging", "generic", 1.5),
-    PatternEntry(r"\bthere(?:'s| is) no (?:one-size-fits-all|simple|easy|single)\b", "hedging", "generic", 1.6),
-    PatternEntry(r"\bit(?:'s| is) (?:also )?important to (?:consider|remember|keep in mind)\b", "hedging", "generic", 1.5),
+    PatternEntry(
+        r"\bhowever,? it(?:'s| is) (?:important|crucial|essential|worth)\b",
+        "hedging",
+        "generic",
+        1.5,
+    ),
+    PatternEntry(
+        r"\bthere(?:'s| is) no (?:one-size-fits-all|simple|easy|single)\b",
+        "hedging",
+        "generic",
+        1.6,
+    ),
+    PatternEntry(
+        r"\bit(?:'s| is) (?:also )?important to (?:consider|remember|keep in mind)\b",
+        "hedging",
+        "generic",
+        1.5,
+    ),
     PatternEntry(r"\bon (?:the )?(?:one|the other) hand\b", "hedging", "generic", 1.0),
     PatternEntry(r"\bit depends on\b", "hedging", "generic", 0.8),
     PatternEntry(r"\bwith that (?:being )?said\b", "hedging", "generic", 1.2),
-    PatternEntry(r"\bit(?:'s| is) (?:a )?common (?:misconception|mistake|belief)\b", "hedging", "generic", 1.4),
+    PatternEntry(
+        r"\bit(?:'s| is) (?:a )?common (?:misconception|mistake|belief)\b",
+        "hedging",
+        "generic",
+        1.4,
+    ),
     PatternEntry(r"\bas (?:always|with (?:anything|everything))\b", "hedging", "generic", 1.0),
 ]
 
@@ -197,8 +346,7 @@ ALL_PHRASE_DATABASES: Dict[str, List[str]] = {
 
 # Pre-compile regexes for performance
 _COMPILED_PATTERNS: List[Tuple[re.Pattern, PatternEntry]] = [
-    (re.compile(p.pattern, re.IGNORECASE | re.MULTILINE), p)
-    for p in ALL_PATTERNS
+    (re.compile(p.pattern, re.IGNORECASE | re.MULTILINE), p) for p in ALL_PATTERNS
 ]
 
 
@@ -219,8 +367,6 @@ class AIPatternDatabaseDetector(BaseDetector):
             return self._empty_result(signal, "text too short (< 15 words)")
 
         lower = text.lower()
-        lines = text.split("\n")
-
         # ── Phase 1: Phrase matching (per-model) ──────────────────────
         phrase_hits: Dict[str, List[str]] = {m: [] for m in ALL_PHRASE_DATABASES}
         for model_name, phrases in ALL_PHRASE_DATABASES.items():
@@ -256,11 +402,13 @@ class AIPatternDatabaseDetector(BaseDetector):
                     pattern_matches[cat] = []
                 for m in matches:
                     match_text = m if isinstance(m, str) else m[0] if m else ""
-                    pattern_matches[cat].append({
-                        "matched": match_text.strip()[:80],
-                        "pattern": entry.pattern,
-                        "model": entry.model,
-                    })
+                    pattern_matches[cat].append(
+                        {
+                            "matched": match_text.strip()[:80],
+                            "pattern": entry.pattern,
+                            "model": entry.model,
+                        }
+                    )
                 weighted_hit_count += len(matches) * entry.weight
 
         # ── Phase 3: Compute density metrics ──────────────────────────
@@ -269,7 +417,7 @@ class AIPatternDatabaseDetector(BaseDetector):
         pattern_density = total_hits / max(word_count, 1)
 
         # Sentence count (rough)
-        sentences = re.split(r'[.!?]+', text)
+        sentences = re.split(r"[.!?]+", text)
         sentences = [s.strip() for s in sentences if s.strip()]
         sentence_count = max(len(sentences), 1)
 
@@ -326,9 +474,7 @@ class AIPatternDatabaseDetector(BaseDetector):
         most_likely_model = max(model_probs, key=model_probs.get)  # type: ignore[arg-type]
 
         # Confidence
-        confidence = self._compute_confidence(
-            [density_score, phrase_density_score, spread_score]
-        )
+        confidence = self._compute_confidence([density_score, phrase_density_score, spread_score])
 
         # Build category summary for response
         pattern_categories: Dict[str, Dict] = {}
@@ -346,13 +492,9 @@ class AIPatternDatabaseDetector(BaseDetector):
             "patterns_found": total_hits,
             "pattern_density": round(pattern_density, 6),
             "pattern_categories": pattern_categories,
-            "phrase_matches": {
-                model: hits for model, hits in phrase_hits.items() if hits
-            },
+            "phrase_matches": {model: hits for model, hits in phrase_hits.items() if hits},
             "most_likely_model": most_likely_model,
-            "model_probabilities": {
-                k: round(v, 4) for k, v in model_probs.items()
-            },
+            "model_probabilities": {k: round(v, 4) for k, v in model_probs.items()},
             "details": {
                 "total_phrase_hits": total_phrase_hits,
                 "total_regex_hits": total_regex_hits,

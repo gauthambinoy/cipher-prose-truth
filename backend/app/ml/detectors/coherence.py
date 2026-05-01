@@ -24,7 +24,7 @@ class CoherenceDetector(BaseDetector):
 
     @staticmethod
     def _sentence_split(text: str) -> List[str]:
-        sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+        sentences = re.split(r"(?<=[.!?])\s+", text.strip())
         return [s.strip() for s in sentences if len(s.strip()) > 5]
 
     @staticmethod
@@ -69,9 +69,7 @@ class CoherenceDetector(BaseDetector):
         var_score = self._sigmoid(-(std_adj - 0.1) / 0.05)
         skip_score = self._sigmoid((mean_skip - 0.35) / 0.15)
 
-        ai_prob = self._clamp(
-            0.40 * coh_score + 0.30 * var_score + 0.30 * skip_score
-        )
+        ai_prob = self._clamp(0.40 * coh_score + 0.30 * var_score + 0.30 * skip_score)
         confidence = self._compute_confidence([coh_score, var_score, skip_score])
 
         return {

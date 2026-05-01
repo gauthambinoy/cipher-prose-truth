@@ -13,7 +13,7 @@ import re
 import uuid
 from collections import Counter
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Set, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +38,7 @@ class DocumentFingerprinter:
     def _normalize_text(text: str) -> str:
         """Lowercase, strip excess whitespace, remove non-alphanumeric except spaces."""
         text = text.lower().strip()
-        text = re.sub(r'\s+', ' ', text)
+        text = re.sub(r"\s+", " ", text)
         return text
 
     @staticmethod
@@ -47,14 +47,14 @@ class DocumentFingerprinter:
 
     @staticmethod
     def _sentence_split(text: str) -> List[str]:
-        sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+        sentences = re.split(r"(?<=[.!?])\s+", text.strip())
         return [s.strip() for s in sentences if s.strip()]
 
     @staticmethod
     def _paragraph_split(text: str) -> List[str]:
-        paragraphs = [p.strip() for p in re.split(r'\n\s*\n', text) if p.strip()]
+        paragraphs = [p.strip() for p in re.split(r"\n\s*\n", text) if p.strip()]
         if not paragraphs:
-            paragraphs = [p.strip() for p in text.split('\n') if p.strip()]
+            paragraphs = [p.strip() for p in text.split("\n") if p.strip()]
         if not paragraphs:
             paragraphs = [text.strip()] if text.strip() else []
         return paragraphs
@@ -72,7 +72,7 @@ class DocumentFingerprinter:
             return {" ".join(words)} if words else set()
         ngrams = set()
         for i in range(len(words) - self.ngram_size + 1):
-            ngram = " ".join(words[i:i + self.ngram_size])
+            ngram = " ".join(words[i : i + self.ngram_size])
             ngrams.add(ngram)
         return ngrams
 

@@ -6,7 +6,7 @@ using spaCy NLP to produce more naturally varied text structure.
 import logging
 import random
 import re
-from typing import List, Optional
+from typing import List
 
 logger = logging.getLogger(__name__)
 
@@ -66,11 +66,13 @@ def _load_spacy():
     """Lazy-load spaCy with the small English model."""
     try:
         import spacy
+
         try:
             nlp = spacy.load("en_core_web_sm")
         except OSError:
             logger.warning("spaCy model 'en_core_web_sm' not found. Downloading...")
             from spacy.cli import download
+
             download("en_core_web_sm")
             nlp = spacy.load("en_core_web_sm")
         return nlp
@@ -161,11 +163,7 @@ class StructuralHumanizer:
                 parts = self._break_long_sentence(sent)
                 result.extend(parts)
             # Merge short consecutive sentences (<8 words each)
-            elif (
-                word_count < 8
-                and i + 1 < len(sentences)
-                and len(sentences[i + 1].split()) < 8
-            ):
+            elif word_count < 8 and i + 1 < len(sentences) and len(sentences[i + 1].split()) < 8:
                 merged = self._merge_sentences(sent, sentences[i + 1])
                 result.append(merged)
                 i += 1  # skip the next since we merged it
@@ -181,7 +179,7 @@ class StructuralHumanizer:
             idx = sentence.find(conj)
             if idx != -1 and idx > 15:
                 first = sentence[:idx].strip().rstrip(",")
-                second = sentence[idx + len(conj):].strip()
+                second = sentence[idx + len(conj) :].strip()
                 # Capitalise the second part
                 if second:
                     second = second[0].upper() + second[1:]
@@ -232,9 +230,7 @@ class StructuralHumanizer:
     # ------------------------------------------------------------------
     # Parenthetical asides
     # ------------------------------------------------------------------
-    def _inject_parentheticals(
-        self, sentences: List[str], is_formal: bool
-    ) -> List[str]:
+    def _inject_parentheticals(self, sentences: List[str], is_formal: bool) -> List[str]:
         """Add parenthetical asides to ~10% of sentences."""
         if is_formal:
             return sentences
@@ -274,9 +270,7 @@ class StructuralHumanizer:
     # ------------------------------------------------------------------
     # Conjunction starters
     # ------------------------------------------------------------------
-    def _inject_conjunction_starters(
-        self, sentences: List[str], is_formal: bool
-    ) -> List[str]:
+    def _inject_conjunction_starters(self, sentences: List[str], is_formal: bool) -> List[str]:
         """Start ~8% of sentences with 'And', 'But', 'So', etc."""
         result: List[str] = []
         for sent in sentences:
@@ -311,7 +305,7 @@ class StructuralHumanizer:
         i = 0
         while i < len(sentences):
             count = self._rng.randint(min_per_para, max_per_para)
-            chunk = sentences[i: i + count]
+            chunk = sentences[i : i + count]
             paragraphs.append(" ".join(chunk))
             i += count
 
@@ -323,7 +317,7 @@ class StructuralHumanizer:
     def _fallback_humanize(self, text: str, style: str) -> str:
         """Minimal structural changes using regex sentence splitting."""
         # Simple sentence split on '. '
-        sentences = re.split(r'(?<=[.!?])\s+', text)
+        sentences = re.split(r"(?<=[.!?])\s+", text)
         sentences = [s.strip() for s in sentences if s.strip()]
 
         is_formal = style.lower() in FORMAL_STYLES

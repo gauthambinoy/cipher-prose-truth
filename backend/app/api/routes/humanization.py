@@ -4,12 +4,10 @@ ClarityAI humanization routes — rewrite AI-generated text to sound more human.
 
 from __future__ import annotations
 
-import asyncio
-import json
 import logging
 import time
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
@@ -157,11 +155,15 @@ def _build_humanize_prompt(
 
     citation_note = ""
     if preserve_citations:
-        citation_note = "\n- Preserve all inline citations, references, and quotations exactly as they appear."
+        citation_note = (
+            "\n- Preserve all inline citations, references, and quotations exactly as they appear."
+        )
 
     change_note = ""
     if minimal_changes:
-        change_note = "\n- Make the MINIMUM changes necessary. Keep as much original phrasing as possible."
+        change_note = (
+            "\n- Make the MINIMUM changes necessary. Keep as much original phrasing as possible."
+        )
 
     return f"""Rewrite the following text so it reads as authentically human-written.
 
@@ -186,6 +188,7 @@ async def _quick_ai_score(text: str) -> float:
     """
     try:
         from app.api.routes.detection import _run_full_detection, DetectionOptions
+
         options = DetectionOptions(
             include_sentence_scores=False,
             include_gltr_data=False,
@@ -218,12 +221,8 @@ async def _quick_plagiarism_score(original: str, rewritten: str) -> float:
         return 0.0
 
     n = 4
-    orig_ngrams = set(
-        tuple(orig_words[i:i + n]) for i in range(len(orig_words) - n + 1)
-    )
-    new_ngrams = set(
-        tuple(new_words[i:i + n]) for i in range(len(new_words) - n + 1)
-    )
+    orig_ngrams = set(tuple(orig_words[i : i + n]) for i in range(len(orig_words) - n + 1))
+    new_ngrams = set(tuple(new_words[i : i + n]) for i in range(len(new_words) - n + 1))
     if not new_ngrams:
         return 0.0
     overlap = len(orig_ngrams & new_ngrams)
@@ -235,20 +234,20 @@ def _compute_quality_metrics(original: str, rewritten: str) -> QualityMetrics:
     import re
 
     # Readability (Flesch-like approximation)
-    sentences = re.split(r'[.!?]+', rewritten)
+    sentences = re.split(r"[.!?]+", rewritten)
     sentences = [s.strip() for s in sentences if s.strip()]
     words = rewritten.split()
-    syllable_count = sum(
-        max(1, len(re.findall(r'[aeiouy]+', w.lower()))) for w in words
-    ) if words else 1
+    syllable_count = (
+        sum(max(1, len(re.findall(r"[aeiouy]+", w.lower()))) for w in words) if words else 1
+    )
 
     num_sentences = max(len(sentences), 1)
     num_words = max(len(words), 1)
     avg_sentence_len = num_words / num_sentences
     avg_syllables = syllable_count / num_words
-    readability = max(0.0, min(1.0,
-        (206.835 - 1.015 * avg_sentence_len - 84.6 * avg_syllables) / 100
-    ))
+    readability = max(
+        0.0, min(1.0, (206.835 - 1.015 * avg_sentence_len - 84.6 * avg_syllables) / 100)
+    )
 
     # Vocabulary diversity
     unique_words = set(w.lower() for w in words)
@@ -259,7 +258,7 @@ def _compute_quality_metrics(original: str, rewritten: str) -> QualityMetrics:
     if len(sent_lengths) > 1:
         mean_len = sum(sent_lengths) / len(sent_lengths)
         variance = sum((x - mean_len) ** 2 for x in sent_lengths) / len(sent_lengths)
-        std_dev = variance ** 0.5
+        std_dev = variance**0.5
         sentence_variety = min(1.0, std_dev / max(mean_len, 1))
     else:
         sentence_variety = 0.0
@@ -307,7 +306,7 @@ async def humanize_text(
         raise HTTPException(
             status_code=503,
             detail="Ollama server is not available. Please ensure it is running at "
-                   f"{settings.OLLAMA_BASE_URL}",
+            f"{settings.OLLAMA_BASE_URL}",
         )
 
     # Get initial AI score
@@ -324,7 +323,10 @@ async def humanize_text(
         iterations_used = iteration
 
         # Check if we already meet targets
-        if current_ai_score <= request.target_ai_score and current_plag_score <= request.target_plagiarism_score:
+        if (
+            current_ai_score <= request.target_ai_score
+            and current_plag_score <= request.target_plagiarism_score
+        ):
             if iteration > 1:  # Don't skip on first iteration
                 break
 
@@ -362,15 +364,20 @@ async def humanize_text(
         current_ai_score = await _quick_ai_score(current_text)
         current_plag_score = await _quick_plagiarism_score(request.text, current_text)
 
-        timeline.append(IterationSnapshot(
-            iteration=iteration,
-            ai_score=round(current_ai_score, 4),
-            plagiarism_score=round(current_plag_score, 4),
-            text_preview=current_text[:200],
-        ))
+        timeline.append(
+            IterationSnapshot(
+                iteration=iteration,
+                ai_score=round(current_ai_score, 4),
+                plagiarism_score=round(current_plag_score, 4),
+                text_preview=current_text[:200],
+            )
+        )
 
         # Stop early if targets met
-        if current_ai_score <= request.target_ai_score and current_plag_score <= request.target_plagiarism_score:
+        if (
+            current_ai_score <= request.target_ai_score
+            and current_plag_score <= request.target_plagiarism_score
+        ):
             break
 
     quality = _compute_quality_metrics(request.text, current_text)
@@ -467,12 +474,14 @@ async def list_ollama_models():
 
         models = []
         for m in data.get("models", []):
-            models.append(OllamaModel(
-                name=m.get("name", "unknown"),
-                size=m.get("size"),
-                modified_at=m.get("modified_at"),
-                digest=m.get("digest"),
-            ))
+            models.append(
+                OllamaModel(
+                    name=m.get("name", "unknown"),
+                    size=m.get("size"),
+                    modified_at=m.get("modified_at"),
+                    digest=m.get("digest"),
+                )
+            )
 
         return ModelsResponse(models=models, ollama_available=True)
 

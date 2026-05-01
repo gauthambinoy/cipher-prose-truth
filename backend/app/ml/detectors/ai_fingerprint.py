@@ -12,10 +12,8 @@ import re
 import logging
 from typing import Dict, List
 
-import numpy as np
 
 from app.ml.detectors.base import BaseDetector
-from app.ml.models.model_registry import ModelRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -24,9 +22,20 @@ logger = logging.getLogger(__name__)
 MODEL_SIGNATURES: Dict[str, Dict[str, List[str]]] = {
     "gpt4": {
         "buzzwords": [
-            "delve", "tapestry", "multifaceted", "nuanced", "comprehensive",
-            "landscape", "paradigm", "intricate", "pivotal", "holistic",
-            "robust", "streamline", "leverage", "underscores",
+            "delve",
+            "tapestry",
+            "multifaceted",
+            "nuanced",
+            "comprehensive",
+            "landscape",
+            "paradigm",
+            "intricate",
+            "pivotal",
+            "holistic",
+            "robust",
+            "streamline",
+            "leverage",
+            "underscores",
         ],
         "patterns": [
             r"it(?:'s| is) (?:important|worth) (?:to )?not(?:e|ing)",
@@ -38,9 +47,18 @@ MODEL_SIGNATURES: Dict[str, Dict[str, List[str]]] = {
     },
     "claude": {
         "buzzwords": [
-            "straightforward", "certainly", "absolutely", "happy to help",
-            "I'd be glad", "great question", "fascinating", "thoughtful",
-            "I appreciate", "nuance", "context", "perspective",
+            "straightforward",
+            "certainly",
+            "absolutely",
+            "happy to help",
+            "I'd be glad",
+            "great question",
+            "fascinating",
+            "thoughtful",
+            "I appreciate",
+            "nuance",
+            "context",
+            "perspective",
         ],
         "patterns": [
             r"I'd be (?:happy|glad) to (?:help|assist|explain)",
@@ -52,9 +70,19 @@ MODEL_SIGNATURES: Dict[str, Dict[str, List[str]]] = {
     },
     "gemini": {
         "buzzwords": [
-            "comprehensive", "overview", "explore", "aspects", "key takeaways",
-            "in-depth", "insights", "strategies", "optimize", "enhance",
-            "benefits", "considerations", "implementation",
+            "comprehensive",
+            "overview",
+            "explore",
+            "aspects",
+            "key takeaways",
+            "in-depth",
+            "insights",
+            "strategies",
+            "optimize",
+            "enhance",
+            "benefits",
+            "considerations",
+            "implementation",
         ],
         "patterns": [
             r"here (?:is|are) (?:a |an )?(?:comprehensive|in-depth) (?:overview|look|guide)",
@@ -66,9 +94,18 @@ MODEL_SIGNATURES: Dict[str, Dict[str, List[str]]] = {
     },
     "llama": {
         "buzzwords": [
-            "I'll", "sure thing", "let's get started", "no problem",
-            "gotcha", "awesome", "cool", "stuff", "basically",
-            "pretty much", "kind of", "gonna",
+            "I'll",
+            "sure thing",
+            "let's get started",
+            "no problem",
+            "gotcha",
+            "awesome",
+            "cool",
+            "stuff",
+            "basically",
+            "pretty much",
+            "kind of",
+            "gonna",
         ],
         "patterns": [
             r"(?:sure|no problem|gotcha|awesome)[!,.]?\s",
@@ -90,10 +127,7 @@ class AIFingerprintDetector(BaseDetector):
         total = max(len(words), 1)
 
         bw_hits = sum(lower.count(bw.lower()) for bw in signature["buzzwords"])
-        pat_hits = sum(
-            len(re.findall(pat, lower, re.IGNORECASE))
-            for pat in signature["patterns"]
-        )
+        pat_hits = sum(len(re.findall(pat, lower, re.IGNORECASE)) for pat in signature["patterns"])
 
         return (bw_hits + pat_hits * 2) / total
 
@@ -120,9 +154,9 @@ class AIFingerprintDetector(BaseDetector):
 
         max_prob = max(probabilities.values())
         confidence = (
-            "high" if max_prob > 0.5 and total_raw > 0.04
-            else "medium" if max_prob > 0.35
-            else "low"
+            "high"
+            if max_prob > 0.5 and total_raw > 0.04
+            else "medium" if max_prob > 0.35 else "low"
         )
 
         return {
@@ -131,9 +165,7 @@ class AIFingerprintDetector(BaseDetector):
             "confidence": confidence,
             "most_likely_model": most_likely,
             "details": {
-                "model_probabilities": {
-                    k: round(v, 4) for k, v in probabilities.items()
-                },
+                "model_probabilities": {k: round(v, 4) for k, v in probabilities.items()},
                 "raw_scores": {k: round(v, 6) for k, v in raw_scores.items()},
                 "total_signal_strength": round(total_raw, 6),
             },

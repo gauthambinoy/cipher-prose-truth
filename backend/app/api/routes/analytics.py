@@ -18,9 +18,9 @@ import json
 import logging
 import time
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -73,33 +73,43 @@ def _get_analyzer(name: str):
     if name not in _analyzers:
         if name == "readability":
             from app.ml.analyzers.readability import ReadabilityAnalyzer
+
             _analyzers[name] = ReadabilityAnalyzer()
         elif name == "tone":
             from app.ml.analyzers.tone_analyzer import ToneAnalyzer
+
             _analyzers[name] = ToneAnalyzer()
         elif name == "grammar":
             from app.ml.analyzers.grammar_checker import GrammarChecker
+
             _analyzers[name] = GrammarChecker()
         elif name == "statistics":
             from app.ml.analyzers.text_statistics import TextStatisticsAnalyzer
+
             _analyzers[name] = TextStatisticsAnalyzer()
         elif name == "suggestions":
             from app.ml.analyzers.writing_suggestions import WritingSuggestionEngine
+
             _analyzers[name] = WritingSuggestionEngine()
         elif name == "citations":
             from app.ml.analyzers.citation_extractor import CitationExtractor
+
             _analyzers[name] = CitationExtractor()
         elif name == "comparison":
             from app.ml.analyzers.comparison import TextComparisonEngine
+
             _analyzers[name] = TextComparisonEngine()
         elif name == "seo":
             from app.ml.analyzers.seo_analyzer import SEOAnalyzer
+
             _analyzers[name] = SEOAnalyzer()
         elif name == "facts":
             from app.ml.analyzers.fact_checker import FactChecker
+
             _analyzers[name] = FactChecker()
         elif name == "paraphrase":
             from app.ml.analyzers.paraphrase_detector import ParaphraseDetector
+
             _analyzers[name] = ParaphraseDetector()
     return _analyzers[name]
 
@@ -147,7 +157,9 @@ async def analyze_readability(
     elapsed = int((time.perf_counter() - start) * 1000)
 
     aid = await _persist_result(db, "readability", request.text, results, elapsed)
-    return AnalyticsResponse(analysis_id=aid, analysis_type="readability", results=results, processing_time_ms=elapsed)
+    return AnalyticsResponse(
+        analysis_id=aid, analysis_type="readability", results=results, processing_time_ms=elapsed
+    )
 
 
 @router.post("/analytics/tone", response_model=AnalyticsResponse)
@@ -162,7 +174,9 @@ async def analyze_tone(
     elapsed = int((time.perf_counter() - start) * 1000)
 
     aid = await _persist_result(db, "tone", request.text, results, elapsed)
-    return AnalyticsResponse(analysis_id=aid, analysis_type="tone", results=results, processing_time_ms=elapsed)
+    return AnalyticsResponse(
+        analysis_id=aid, analysis_type="tone", results=results, processing_time_ms=elapsed
+    )
 
 
 @router.post("/analytics/grammar", response_model=AnalyticsResponse)
@@ -177,7 +191,9 @@ async def analyze_grammar(
     elapsed = int((time.perf_counter() - start) * 1000)
 
     aid = await _persist_result(db, "grammar", request.text, results, elapsed)
-    return AnalyticsResponse(analysis_id=aid, analysis_type="grammar", results=results, processing_time_ms=elapsed)
+    return AnalyticsResponse(
+        analysis_id=aid, analysis_type="grammar", results=results, processing_time_ms=elapsed
+    )
 
 
 @router.post("/analytics/statistics", response_model=AnalyticsResponse)
@@ -192,7 +208,9 @@ async def analyze_statistics(
     elapsed = int((time.perf_counter() - start) * 1000)
 
     aid = await _persist_result(db, "statistics", request.text, results, elapsed)
-    return AnalyticsResponse(analysis_id=aid, analysis_type="statistics", results=results, processing_time_ms=elapsed)
+    return AnalyticsResponse(
+        analysis_id=aid, analysis_type="statistics", results=results, processing_time_ms=elapsed
+    )
 
 
 @router.post("/analytics/suggestions", response_model=AnalyticsResponse)
@@ -207,7 +225,9 @@ async def analyze_suggestions(
     elapsed = int((time.perf_counter() - start) * 1000)
 
     aid = await _persist_result(db, "suggestions", request.text, results, elapsed)
-    return AnalyticsResponse(analysis_id=aid, analysis_type="suggestions", results=results, processing_time_ms=elapsed)
+    return AnalyticsResponse(
+        analysis_id=aid, analysis_type="suggestions", results=results, processing_time_ms=elapsed
+    )
 
 
 @router.post("/analytics/citations", response_model=AnalyticsResponse)
@@ -222,7 +242,9 @@ async def analyze_citations(
     elapsed = int((time.perf_counter() - start) * 1000)
 
     aid = await _persist_result(db, "citations", request.text, results, elapsed)
-    return AnalyticsResponse(analysis_id=aid, analysis_type="citations", results=results, processing_time_ms=elapsed)
+    return AnalyticsResponse(
+        analysis_id=aid, analysis_type="citations", results=results, processing_time_ms=elapsed
+    )
 
 
 @router.post("/analytics/compare", response_model=AnalyticsResponse)
@@ -239,7 +261,9 @@ async def compare_texts(
 
     combined_input = f"TEXT_A:\n{request.text_a[:500]}\n---\nTEXT_B:\n{request.text_b[:500]}"
     aid = await _persist_result(db, "comparison", combined_input, results, elapsed)
-    return AnalyticsResponse(analysis_id=aid, analysis_type="comparison", results=results, processing_time_ms=elapsed)
+    return AnalyticsResponse(
+        analysis_id=aid, analysis_type="comparison", results=results, processing_time_ms=elapsed
+    )
 
 
 @router.post("/analytics/full", response_model=FullAnalyticsResponse)
@@ -301,7 +325,9 @@ async def seo_analysis(
     results = await _run_analysis(analyzer, request.text)
     elapsed = int((time.perf_counter() - start) * 1000)
     aid = await _persist_result(db, "seo", request.text, results, elapsed)
-    return AnalyticsResponse(analysis_id=aid, analysis_type="seo", results=results, processing_time_ms=elapsed)
+    return AnalyticsResponse(
+        analysis_id=aid, analysis_type="seo", results=results, processing_time_ms=elapsed
+    )
 
 
 @router.post("/analytics/facts", response_model=AnalyticsResponse)
@@ -315,7 +341,9 @@ async def fact_check_analysis(
     results = await _run_analysis(analyzer, request.text)
     elapsed = int((time.perf_counter() - start) * 1000)
     aid = await _persist_result(db, "facts", request.text, results, elapsed)
-    return AnalyticsResponse(analysis_id=aid, analysis_type="facts", results=results, processing_time_ms=elapsed)
+    return AnalyticsResponse(
+        analysis_id=aid, analysis_type="facts", results=results, processing_time_ms=elapsed
+    )
 
 
 @router.post("/analytics/paraphrase", response_model=AnalyticsResponse)
@@ -329,4 +357,6 @@ async def paraphrase_analysis(
     results = await _run_analysis(analyzer, request.text)
     elapsed = int((time.perf_counter() - start) * 1000)
     aid = await _persist_result(db, "paraphrase", request.text, results, elapsed)
-    return AnalyticsResponse(analysis_id=aid, analysis_type="paraphrase", results=results, processing_time_ms=elapsed)
+    return AnalyticsResponse(
+        analysis_id=aid, analysis_type="paraphrase", results=results, processing_time_ms=elapsed
+    )

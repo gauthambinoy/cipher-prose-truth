@@ -75,17 +75,14 @@ class ModelRegistry:
             hub_id = cls._MODEL_MAP.get(model_id)
             if hub_id is None:
                 raise ValueError(
-                    f"Unknown model_id {model_id!r}. "
-                    f"Available: {list(cls._MODEL_MAP.keys())}"
+                    f"Unknown model_id {model_id!r}. " f"Available: {list(cls._MODEL_MAP.keys())}"
                 )
 
             logger.info("Loading model %s (%s) ...", model_id, hub_id)
             start = time.perf_counter()
 
             loop = asyncio.get_running_loop()
-            loaded = await loop.run_in_executor(
-                None, cls._load_sync, model_id, hub_id
-            )
+            loaded = await loop.run_in_executor(None, cls._load_sync, model_id, hub_id)
 
             elapsed = time.perf_counter() - start
             logger.info("Model %s loaded in %.2f s", model_id, elapsed)
@@ -167,9 +164,7 @@ class ModelRegistry:
         try:
             return spacy.load(model_name)
         except OSError:
-            logger.warning(
-                "spaCy model %s not found, downloading ...", model_name
-            )
+            logger.warning("spaCy model %s not found, downloading ...", model_name)
             from spacy.cli import download as spacy_download
 
             spacy_download(model_name)

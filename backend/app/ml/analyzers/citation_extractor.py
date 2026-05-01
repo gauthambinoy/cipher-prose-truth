@@ -26,32 +26,24 @@ _APA_REFERENCE = re.compile(
 )
 
 # MLA: (Author Page) or (Author)
-_MLA_INLINE = re.compile(
-    r"\(([A-Z][a-zA-Z\-]+(?:\sand\s[A-Z][a-zA-Z\-]+)?)\s+(\d{1,4})\)"
-)
+_MLA_INLINE = re.compile(r"\(([A-Z][a-zA-Z\-]+(?:\sand\s[A-Z][a-zA-Z\-]+)?)\s+(\d{1,4})\)")
 
 # IEEE: [1], [2], [1-3], [1, 2]
 _IEEE_INLINE = re.compile(r"\[(\d+(?:\s*[-,]\s*\d+)*)\]")
 # IEEE reference: [1] A. Author, "Title," ...
-_IEEE_REFERENCE = re.compile(
-    r"^\[(\d+)\]\s+(.+?)(?:\.|$)", re.MULTILINE
-)
+_IEEE_REFERENCE = re.compile(r"^\[(\d+)\]\s+(.+?)(?:\.|$)", re.MULTILINE)
 
 # Chicago notes: superscript numbers (we look for patterns like ^1 or footnote markers)
 _CHICAGO_INLINE = re.compile(r"(?:\^|¹|²|³|⁴|⁵|⁶|⁷|⁸|⁹|⁰|\[fn(\d+)\])(\d*)")
 
 # Harvard: similar to APA but with slight variations (Author Year) without comma
-_HARVARD_INLINE = re.compile(
-    r"\(([A-Z][a-zA-Z\-]+(?:\sand\s[A-Z][a-zA-Z\-]+)?)\s+(\d{4}[a-z]?)\)"
-)
+_HARVARD_INLINE = re.compile(r"\(([A-Z][a-zA-Z\-]+(?:\sand\s[A-Z][a-zA-Z\-]+)?)\s+(\d{4}[a-z]?)\)")
 
 # Generic reference list entry (numbered)
 _NUMBERED_REFERENCE = re.compile(r"^\s*\[?(\d{1,3})\]?\s*\.?\s+(.+)", re.MULTILINE)
 
 # Generic author-year reference
-_AUTHOR_YEAR_REFERENCE = re.compile(
-    r"^([A-Z][a-zA-Z\-]+.*?)\((\d{4}[a-z]?)\)", re.MULTILINE
-)
+_AUTHOR_YEAR_REFERENCE = re.compile(r"^([A-Z][a-zA-Z\-]+.*?)\((\d{4}[a-z]?)\)", re.MULTILINE)
 
 
 class CitationExtractor:
@@ -86,13 +78,15 @@ class CitationExtractor:
             key = f"apa:{match.group(1)}:{match.group(2)}"
             if key not in seen:
                 seen.add(key)
-                citations.append({
-                    "style": "APA",
-                    "text": match.group(0),
-                    "author": match.group(1),
-                    "year": match.group(2),
-                    "position": {"start": match.start(), "end": match.end()},
-                })
+                citations.append(
+                    {
+                        "style": "APA",
+                        "text": match.group(0),
+                        "author": match.group(1),
+                        "year": match.group(2),
+                        "position": {"start": match.start(), "end": match.end()},
+                    }
+                )
 
         # MLA-style: (Author Page)
         for match in _MLA_INLINE.finditer(text):
@@ -101,13 +95,15 @@ class CitationExtractor:
             full = match.group(0)
             if key not in seen and "," not in full:
                 seen.add(key)
-                citations.append({
-                    "style": "MLA",
-                    "text": match.group(0),
-                    "author": match.group(1),
-                    "page": match.group(2),
-                    "position": {"start": match.start(), "end": match.end()},
-                })
+                citations.append(
+                    {
+                        "style": "MLA",
+                        "text": match.group(0),
+                        "author": match.group(1),
+                        "page": match.group(2),
+                        "position": {"start": match.start(), "end": match.end()},
+                    }
+                )
 
         # IEEE-style: [1], [2-5]
         for match in _IEEE_INLINE.finditer(text):
@@ -115,32 +111,34 @@ class CitationExtractor:
             if key not in seen:
                 seen.add(key)
                 numbers_str = match.group(1)
-                citations.append({
-                    "style": "IEEE",
-                    "text": match.group(0),
-                    "numbers": numbers_str,
-                    "position": {"start": match.start(), "end": match.end()},
-                })
+                citations.append(
+                    {
+                        "style": "IEEE",
+                        "text": match.group(0),
+                        "numbers": numbers_str,
+                        "position": {"start": match.start(), "end": match.end()},
+                    }
+                )
 
         # Harvard-style: (Author Year) — no comma
         for match in _HARVARD_INLINE.finditer(text):
             key = f"harvard:{match.group(1)}:{match.group(2)}"
             if key not in seen:
                 seen.add(key)
-                citations.append({
-                    "style": "Harvard",
-                    "text": match.group(0),
-                    "author": match.group(1),
-                    "year": match.group(2),
-                    "position": {"start": match.start(), "end": match.end()},
-                })
+                citations.append(
+                    {
+                        "style": "Harvard",
+                        "text": match.group(0),
+                        "author": match.group(1),
+                        "year": match.group(2),
+                        "position": {"start": match.start(), "end": match.end()},
+                    }
+                )
 
         return citations
 
     # ------------------------------------------------------------------
-    def _detect_citation_style(
-        self, text: str, inline_citations: List[Dict[str, Any]]
-    ) -> str:
+    def _detect_citation_style(self, text: str, inline_citations: List[Dict[str, Any]]) -> str:
         """Determine the dominant citation style in the text."""
         style_counts: Dict[str, int] = {}
         for cit in inline_citations:
@@ -168,30 +166,36 @@ class CitationExtractor:
 
         # Numbered references [1] ...
         for match in _IEEE_REFERENCE.finditer(ref_section):
-            references.append({
-                "number": int(match.group(1)),
-                "text": match.group(2).strip(),
-                "style": "IEEE",
-            })
+            references.append(
+                {
+                    "number": int(match.group(1)),
+                    "text": match.group(2).strip(),
+                    "style": "IEEE",
+                }
+            )
 
         # APA-style references: Author, A. B. (Year). Title.
         if not references:
             for match in _APA_REFERENCE.finditer(ref_section):
-                references.append({
-                    "author": match.group(1).strip(),
-                    "year": match.group(2),
-                    "title": match.group(3).strip(),
-                    "style": "APA",
-                })
+                references.append(
+                    {
+                        "author": match.group(1).strip(),
+                        "year": match.group(2),
+                        "title": match.group(3).strip(),
+                        "style": "APA",
+                    }
+                )
 
         # Fallback: author-year pattern
         if not references:
             for match in _AUTHOR_YEAR_REFERENCE.finditer(ref_section):
-                references.append({
-                    "author": match.group(1).strip().rstrip(",. "),
-                    "year": match.group(2),
-                    "style": "generic",
-                })
+                references.append(
+                    {
+                        "author": match.group(1).strip().rstrip(",. "),
+                        "year": match.group(2),
+                        "style": "generic",
+                    }
+                )
 
         return references
 
@@ -206,7 +210,7 @@ class CitationExtractor:
         for pattern in patterns:
             match = re.search(pattern, text)
             if match:
-                return text[match.start():]
+                return text[match.start() :]
         return None
 
     # ------------------------------------------------------------------
@@ -243,19 +247,23 @@ class CitationExtractor:
                         found = True
                         break
                 if not found and nums:
-                    missing.append({
-                        "citation": cit["text"],
-                        "reason": f"No reference entry found for number(s) {nums_str}",
-                    })
+                    missing.append(
+                        {
+                            "citation": cit["text"],
+                            "reason": f"No reference entry found for number(s) {nums_str}",
+                        }
+                    )
             elif "author" in cit:
                 author_lower = cit["author"].split()[0].lower() if cit["author"] else ""
                 if author_lower in ref_authors:
                     found = True
                 if not found and author_lower:
-                    missing.append({
-                        "citation": cit["text"],
-                        "reason": f"No reference entry found for author '{cit['author']}'",
-                    })
+                    missing.append(
+                        {
+                            "citation": cit["text"],
+                            "reason": f"No reference entry found for author '{cit['author']}'",
+                        }
+                    )
 
         return missing
 
@@ -273,19 +281,23 @@ class CitationExtractor:
         # Check mixed styles
         styles_used = set(c.get("style") for c in inline_citations)
         if len(styles_used) > 1:
-            issues.append({
-                "type": "mixed_styles",
-                "message": f"Multiple citation styles detected: {', '.join(sorted(styles_used))}. Use a single consistent style.",
-                "severity": "warning",
-            })
+            issues.append(
+                {
+                    "type": "mixed_styles",
+                    "message": f"Multiple citation styles detected: {', '.join(sorted(styles_used))}. Use a single consistent style.",
+                    "severity": "warning",
+                }
+            )
 
         # Check for inline citations without references section
         if inline_citations and not references:
-            issues.append({
-                "type": "missing_references_section",
-                "message": "Inline citations found but no reference list/bibliography detected.",
-                "severity": "critical",
-            })
+            issues.append(
+                {
+                    "type": "missing_references_section",
+                    "message": "Inline citations found but no reference list/bibliography detected.",
+                    "severity": "critical",
+                }
+            )
 
         # Check numbering gaps for IEEE
         if style == "IEEE" and references:
@@ -294,11 +306,13 @@ class CitationExtractor:
                 expected = list(range(1, ref_nums[-1] + 1))
                 missing_nums = set(expected) - set(ref_nums)
                 if missing_nums:
-                    issues.append({
-                        "type": "numbering_gap",
-                        "message": f"Gap in reference numbering. Missing: {sorted(missing_nums)}",
-                        "severity": "warning",
-                    })
+                    issues.append(
+                        {
+                            "type": "numbering_gap",
+                            "message": f"Gap in reference numbering. Missing: {sorted(missing_nums)}",
+                            "severity": "warning",
+                        }
+                    )
 
         # Check for references not cited
         if references and inline_citations:
@@ -321,10 +335,12 @@ class CitationExtractor:
                         ref_cited = True
                 if not ref_cited:
                     ref_label = ref.get("text", ref.get("author", "unknown"))[:60]
-                    issues.append({
-                        "type": "uncited_reference",
-                        "message": f"Reference appears to be uncited: '{ref_label}...'",
-                        "severity": "info",
-                    })
+                    issues.append(
+                        {
+                            "type": "uncited_reference",
+                            "message": f"Reference appears to be uncited: '{ref_label}...'",
+                            "severity": "info",
+                        }
+                    )
 
         return issues

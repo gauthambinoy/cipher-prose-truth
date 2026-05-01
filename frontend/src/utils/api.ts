@@ -19,7 +19,7 @@ import type {
 } from "@/types/analytics";
 
 const api = axios.create({
-  baseURL: "/api/v1",
+  baseURL: import.meta.env.VITE_API_URL || "/api/v1",
   headers: {
     "Content-Type": "application/json",
   },
@@ -239,7 +239,7 @@ export interface RewriteDetectionResponse {
 }
 
 export async function detectRewrite(text: string): Promise<RewriteDetectionResponse> {
-  const { data } = await api.post<RewriteDetectionResponse>("/detect/rewrite", { text });
+  const { data } = await api.post<RewriteDetectionResponse>("/advanced/rewrite-detect", { text });
   return data;
 }
 
@@ -252,17 +252,17 @@ export interface FingerprintResponse {
 }
 
 export async function generateFingerprint(text: string): Promise<FingerprintResponse> {
-  const { data } = await api.post<FingerprintResponse>("/fingerprint/generate", { text });
+  const { data } = await api.post<FingerprintResponse>("/advanced/fingerprint", { text });
   return data;
 }
 
 export async function verifyFingerprint(
-  text: string,
-  fingerprintId: string
+  fingerprintId1: string,
+  fingerprintId2: string
 ): Promise<{ verified: boolean; similarity: number }> {
   const { data } = await api.post<{ verified: boolean; similarity: number }>(
-    "/fingerprint/verify",
-    { text, fingerprint_id: fingerprintId }
+    "/advanced/fingerprint/verify",
+    { fingerprint_id_1: fingerprintId1, fingerprint_id_2: fingerprintId2 }
   );
   return data;
 }
@@ -282,7 +282,7 @@ export async function submitVersion(
   documentId: string,
   text: string
 ): Promise<VersionEntry> {
-  const { data } = await api.post<VersionEntry>("/versions/submit", {
+  const { data } = await api.post<VersionEntry>("/advanced/version", {
     document_id: documentId,
     text,
   });
@@ -292,7 +292,7 @@ export async function submitVersion(
 export async function getVersionHistory(
   documentId: string
 ): Promise<VersionEntry[]> {
-  const { data } = await api.get<VersionEntry[]>(`/versions/${documentId}`);
+  const { data } = await api.get<VersionEntry[]>(`/advanced/version/${documentId}`);
   return data;
 }
 
@@ -309,7 +309,7 @@ export interface CoachSuggestion {
 export async function getCoachSuggestions(
   text: string
 ): Promise<CoachSuggestion[]> {
-  const { data } = await api.post<CoachSuggestion[]>("/coach/suggestions", { text });
+  const { data } = await api.post<CoachSuggestion[]>("/advanced/coach", { text });
   return data;
 }
 
@@ -339,14 +339,17 @@ export interface BatchResponse {
 export async function processBatch(
   items: { filename: string; text: string }[]
 ): Promise<BatchResponse> {
-  const { data } = await api.post<BatchResponse>("/batch/process", { items });
+  const { data } = await api.post<BatchResponse>("/advanced/batch", {
+    texts: items.map((item) => item.text),
+    filenames: items.map((item) => item.filename),
+  });
   return data;
 }
 
 export async function getBatchResults(
   batchId: string
 ): Promise<BatchResponse> {
-  const { data } = await api.get<BatchResponse>(`/batch/${batchId}`);
+  const { data } = await api.get<BatchResponse>(`/advanced/batch/${batchId}`);
   return data;
 }
 
@@ -362,9 +365,9 @@ export async function shareAnalysis(
   analysisData: Record<string, unknown>,
   expiry: "24h" | "7d" | "30d" | "never"
 ): Promise<ShareAnalysisResponse> {
-  const { data } = await api.post<ShareAnalysisResponse>("/share", {
-    data: analysisData,
-    expiry,
+  const { data } = await api.post<ShareAnalysisResponse>("/advanced/share", {
+    analysis_data: analysisData,
+    title: `Shared analysis (${expiry})`,
   });
   return data;
 }

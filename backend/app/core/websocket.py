@@ -6,11 +6,10 @@ Provides real-time streaming of analysis results and progress updates.
 
 from __future__ import annotations
 
-import json
 import logging
 from typing import Any, Dict, List, Optional, Set
 
-from fastapi import WebSocket, WebSocketDisconnect
+from fastapi import WebSocket
 
 logger = logging.getLogger(__name__)
 
@@ -96,18 +95,14 @@ class ConnectionManager:
     # Send methods
     # ------------------------------------------------------------------
 
-    async def send_json(
-        self, websocket: WebSocket, data: Dict[str, Any]
-    ) -> None:
+    async def send_json(self, websocket: WebSocket, data: Dict[str, Any]) -> None:
         """Send a JSON message to a specific WebSocket."""
         try:
             await websocket.send_json(data)
         except Exception as exc:
             logger.warning("Failed to send JSON to WebSocket: %s", exc)
 
-    async def send_to_client(
-        self, client_id: str, data: Dict[str, Any]
-    ) -> bool:
+    async def send_to_client(self, client_id: str, data: Dict[str, Any]) -> bool:
         """Send a JSON message to a specific client by ID. Returns True if sent."""
         ws = self._client_map.get(client_id)
         if ws is None:
@@ -129,9 +124,7 @@ class ConnectionManager:
         for ws in disconnected:
             self.disconnect(ws)
 
-    async def broadcast_to_channel(
-        self, channel: str, data: Dict[str, Any]
-    ) -> None:
+    async def broadcast_to_channel(self, channel: str, data: Dict[str, Any]) -> None:
         """Broadcast a JSON message to all clients in a specific channel."""
         connections = self._channels.get(channel, set())
         disconnected: List[WebSocket] = []
@@ -155,11 +148,14 @@ class ConnectionManager:
         result: Dict[str, Any],
     ) -> None:
         """Stream a single signal's result as it completes during detection."""
-        await self.send_to_client(client_id, {
-            "type": "signal_result",
-            "signal": signal_name,
-            "data": result,
-        })
+        await self.send_to_client(
+            client_id,
+            {
+                "type": "signal_result",
+                "signal": signal_name,
+                "data": result,
+            },
+        )
 
     async def send_progress(
         self,
@@ -170,13 +166,16 @@ class ConnectionManager:
     ) -> None:
         """Send a progress update (e.g., during humanization iterations)."""
         progress = round(current_step / total_steps * 100, 1) if total_steps > 0 else 0
-        await self.send_to_client(client_id, {
-            "type": "progress",
-            "current_step": current_step,
-            "total_steps": total_steps,
-            "progress_percent": progress,
-            "message": message,
-        })
+        await self.send_to_client(
+            client_id,
+            {
+                "type": "progress",
+                "current_step": current_step,
+                "total_steps": total_steps,
+                "progress_percent": progress,
+                "message": message,
+            },
+        )
 
     async def send_completion(
         self,
@@ -185,20 +184,24 @@ class ConnectionManager:
         result: Dict[str, Any],
     ) -> None:
         """Send a completion message when an analysis finishes."""
-        await self.send_to_client(client_id, {
-            "type": "complete",
-            "analysis_id": analysis_id,
-            "data": result,
-        })
+        await self.send_to_client(
+            client_id,
+            {
+                "type": "complete",
+                "analysis_id": analysis_id,
+                "data": result,
+            },
+        )
 
-    async def send_error(
-        self, client_id: str, error_message: str
-    ) -> None:
+    async def send_error(self, client_id: str, error_message: str) -> None:
         """Send an error message to a specific client."""
-        await self.send_to_client(client_id, {
-            "type": "error",
-            "message": error_message,
-        })
+        await self.send_to_client(
+            client_id,
+            {
+                "type": "error",
+                "message": error_message,
+            },
+        )
 
     # ------------------------------------------------------------------
     # Properties

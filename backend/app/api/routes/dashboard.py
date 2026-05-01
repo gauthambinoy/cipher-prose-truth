@@ -11,15 +11,14 @@ from __future__ import annotations
 import json
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
-from sqlalchemy import func, text, cast, Float
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.database import get_db
-from app.db.models import Analysis, AnalyticsResult
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -28,6 +27,7 @@ router = APIRouter()
 # ---------------------------------------------------------------------------
 # Response schemas
 # ---------------------------------------------------------------------------
+
 
 class DashboardStatsResponse(BaseModel):
     total_analyses: int
@@ -74,6 +74,7 @@ class DashboardTopSignalsResponse(BaseModel):
 # Helper: compute time boundaries
 # ---------------------------------------------------------------------------
 
+
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
@@ -97,14 +98,11 @@ def _start_of_month() -> datetime:
 # Routes
 # ---------------------------------------------------------------------------
 
+
 @router.get("/dashboard/stats", response_model=DashboardStatsResponse)
 async def dashboard_stats(db: AsyncSession = Depends(get_db)):
     """Return aggregate dashboard statistics."""
 
-    # Total analyses
-    total_q = await db.execute(
-        func.count(Analysis.id).select()
-    )
     # Use raw SQL for aggregate queries on SQLite to avoid ORM quirks
     total_result = await db.execute(text("SELECT COUNT(*) FROM analyses"))
     total_analyses = total_result.scalar() or 0
@@ -173,16 +171,16 @@ async def dashboard_trends(db: AsyncSession = Depends(get_db)):
             {"lo": bin_start, "hi": bin_end},
         )
         count = result.scalar() or 0
-        histogram.append(HistogramBin(
-            bin_start=round(bin_start, 1),
-            bin_end=round(bin_end, 1),
-            count=count,
-        ))
+        histogram.append(
+            HistogramBin(
+                bin_start=round(bin_start, 1),
+                bin_end=round(bin_end, 1),
+                count=count,
+            )
+        )
 
     # Handle the edge case for score == 1.0 (include in last bin)
-    result = await db.execute(
-        text("SELECT COUNT(*) FROM analyses WHERE overall_ai_score = 1.0")
-    )
+    result = await db.execute(text("SELECT COUNT(*) FROM analyses WHERE overall_ai_score = 1.0"))
     extra = result.scalar() or 0
     if histogram:
         histogram[-1].count += extra
@@ -200,8 +198,7 @@ async def dashboard_trends(db: AsyncSession = Depends(get_db)):
         {"since": thirty_days_ago},
     )
     analyses_per_day = [
-        TrendPoint(date=str(row[0]), count=row[1])
-        for row in daily_result.fetchall()
+        TrendPoint(date=str(row[0]), count=row[1]) for row in daily_result.fetchall()
     ]
 
     # 3. Most common classifications
@@ -215,8 +212,7 @@ async def dashboard_trends(db: AsyncSession = Depends(get_db)):
         )
     )
     classifications = [
-        ClassificationCount(classification=row[0], count=row[1])
-        for row in class_result.fetchall()
+        ClassificationCount(classification=row[0], count=row[1]) for row in class_result.fetchall()
     ]
 
     return DashboardTrendsResponse(
@@ -287,10 +283,12 @@ async def dashboard_top_signals(db: AsyncSession = Depends(get_db)):
     for name in sorted(signal_counts, key=lambda n: signal_counts[n], reverse=True):
         count = signal_counts[name]
         avg = signal_score_sums[name] / count if count > 0 else 0.0
-        signals.append(SignalStat(
-            signal_name=name,
-            fire_count=count,
-            average_score=round(avg, 4),
-        ))
+        signals.append(
+            SignalStat(
+                signal_name=name,
+                fire_count=count,
+                average_score=round(avg, 4),
+            )
+        )
 
     return DashboardTopSignalsResponse(signals=signals)

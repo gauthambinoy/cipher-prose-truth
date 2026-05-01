@@ -18,20 +18,20 @@ logger = logging.getLogger(__name__)
 # over-weight the more discriminative signals.
 # ---------------------------------------------------------------------------
 DEFAULT_WEIGHTS: Dict[str, float] = {
-    "perplexity":          0.10,
-    "burstiness":          0.08,
-    "entropy":             0.07,
-    "stylometric":         0.09,
-    "pos_pattern":         0.05,
+    "perplexity": 0.10,
+    "burstiness": 0.08,
+    "entropy": 0.07,
+    "stylometric": 0.09,
+    "pos_pattern": 0.05,
     "vocabulary_richness": 0.05,
-    "repetition":          0.05,
-    "coherence":           0.06,
-    "detectgpt":           0.10,
-    "binoculars":          0.10,
-    "roberta_chatgpt":     0.08,
-    "roberta_openai":      0.08,
+    "repetition": 0.05,
+    "coherence": 0.06,
+    "detectgpt": 0.10,
+    "binoculars": 0.10,
+    "roberta_chatgpt": 0.08,
+    "roberta_openai": 0.08,
     "ai_content_detector": 0.06,
-    "watermark":           0.03,
+    "watermark": 0.03,
 }
 
 SIGNAL_NAMES: List[str] = list(DEFAULT_WEIGHTS.keys())
@@ -80,9 +80,7 @@ class EnsembleMetaLearner:
 
         if model_path is None:
             candidate = (
-                Path(__file__).resolve().parent.parent.parent.parent
-                / "models"
-                / "meta_learner.pkl"
+                Path(__file__).resolve().parent.parent.parent.parent / "models" / "meta_learner.pkl"
             )
             if candidate.exists():
                 self._model_path = str(candidate)
@@ -164,13 +162,9 @@ class EnsembleMetaLearner:
 
         if self._model is not None:
             try:
-                overall_score = float(
-                    self._model.predict_proba(features.reshape(1, -1))[0, 1]
-                )
+                overall_score = float(self._model.predict_proba(features.reshape(1, -1))[0, 1])
             except Exception as exc:
-                logger.warning(
-                    "Model prediction failed, falling back to weighted avg: %s", exc
-                )
+                logger.warning("Model prediction failed, falling back to weighted avg: %s", exc)
                 overall_score = self._weighted_average(base_probs)
         else:
             overall_score = self._weighted_average(base_probs)
@@ -195,7 +189,11 @@ class EnsembleMetaLearner:
 
         # ----- human-readable interpretation -------------------------
         interpretation = self._build_interpretation(
-            overall_score, classification, confidence, signal_agreement, top_signals,
+            overall_score,
+            classification,
+            confidence,
+            signal_agreement,
+            top_signals,
             watermark_detected,
         )
 
@@ -289,13 +287,9 @@ class EnsembleMetaLearner:
         # Lead sentence
         pct = int(round(score * 100))
         if classification == "ai":
-            parts.append(
-                f"This text is very likely AI-generated (score: {pct}%)."
-            )
+            parts.append(f"This text is very likely AI-generated (score: {pct}%).")
         elif classification == "human":
-            parts.append(
-                f"This text appears to be human-written (score: {pct}%)."
-            )
+            parts.append(f"This text appears to be human-written (score: {pct}%).")
         else:
             parts.append(
                 f"The origin of this text is uncertain (score: {pct}%). "

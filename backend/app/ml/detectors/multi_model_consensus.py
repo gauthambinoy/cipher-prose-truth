@@ -59,9 +59,7 @@ class MultiModelConsensusDetector(BaseDetector):
             return score
         return 1.0 - score
 
-    async def _run_single_model(
-        self, key: str, display_name: str, text: str
-    ) -> Dict[str, Any]:
+    async def _run_single_model(self, key: str, display_name: str, text: str) -> Dict[str, Any]:
         """Run a single classification pipeline and return its result."""
         try:
             pipe = await ModelRegistry.get_model(key)
@@ -99,9 +97,7 @@ class MultiModelConsensusDetector(BaseDetector):
                 "error": str(exc),
             }
 
-    def _compute_weighted_score(
-        self, individual_results: List[Dict[str, Any]]
-    ) -> float:
+    def _compute_weighted_score(self, individual_results: List[Dict[str, Any]]) -> float:
         """Compute weighted average AI score based on reliability weights."""
         total_weight = 0.0
         weighted_sum = 0.0
@@ -142,9 +138,7 @@ class MultiModelConsensusDetector(BaseDetector):
         scores = [r["ai_score"] for r in valid_results]
         mean_score = sum(scores) / len(scores)
 
-        agree_count = sum(
-            1 for s in scores if abs(s - mean_score) < _AGREEMENT_DELTA
-        )
+        agree_count = sum(1 for s in scores if abs(s - mean_score) < _AGREEMENT_DELTA)
         return (
             round(agree_count / len(valid_results), 4),
             agree_count,
@@ -170,35 +164,39 @@ class MultiModelConsensusDetector(BaseDetector):
             deviation = result["ai_score"] - mean_score
             if abs(deviation) >= _AGREEMENT_DELTA:
                 direction = "more AI" if deviation > 0 else "more human"
-                disagreements.append({
-                    "model": result["model_name"],
-                    "model_key": result["model_key"],
-                    "ai_score": result["ai_score"],
-                    "deviation_from_mean": round(deviation, 4),
-                    "direction": direction,
-                    "explanation": (
-                        f"{result['model_name']} scored {result['ai_score']:.2f} "
-                        f"({direction} than consensus {mean_score:.2f}). "
-                        f"This model may weight different textual features."
-                    ),
-                })
+                disagreements.append(
+                    {
+                        "model": result["model_name"],
+                        "model_key": result["model_key"],
+                        "ai_score": result["ai_score"],
+                        "deviation_from_mean": round(deviation, 4),
+                        "direction": direction,
+                        "explanation": (
+                            f"{result['model_name']} scored {result['ai_score']:.2f} "
+                            f"({direction} than consensus {mean_score:.2f}). "
+                            f"This model may weight different textual features."
+                        ),
+                    }
+                )
 
         # Check for split votes (some say AI, some say human)
         votes = [r["vote"] for r in valid_results]
         ai_votes = votes.count("ai")
         human_votes = votes.count("human")
         if ai_votes > 0 and human_votes > 0:
-            disagreements.append({
-                "type": "split_vote",
-                "ai_vote_count": ai_votes,
-                "human_vote_count": human_votes,
-                "uncertain_vote_count": votes.count("uncertain"),
-                "explanation": (
-                    f"Models are split: {ai_votes} vote AI, {human_votes} vote human, "
-                    f"{votes.count('uncertain')} uncertain. "
-                    "The text may contain mixed human/AI content."
-                ),
-            })
+            disagreements.append(
+                {
+                    "type": "split_vote",
+                    "ai_vote_count": ai_votes,
+                    "human_vote_count": human_votes,
+                    "uncertain_vote_count": votes.count("uncertain"),
+                    "explanation": (
+                        f"Models are split: {ai_votes} vote AI, {human_votes} vote human, "
+                        f"{votes.count('uncertain')} uncertain. "
+                        "The text may contain mixed human/AI content."
+                    ),
+                }
+            )
 
         return disagreements
 
@@ -213,19 +211,14 @@ class MultiModelConsensusDetector(BaseDetector):
             return self._empty_result(signal, "text too short (< 10 words)")
 
         # Run all models concurrently
-        tasks = [
-            self._run_single_model(key, name, text)
-            for key, name, _ in _MODEL_CONFIGS
-        ]
+        tasks = [self._run_single_model(key, name, text) for key, name, _ in _MODEL_CONFIGS]
         individual_results = await asyncio.gather(*tasks)
 
         # Weighted consensus score
         consensus_score = self._compute_weighted_score(individual_results)
 
         # Agreement analysis
-        agreement_ratio, agree_count, total_models = self._compute_agreement(
-            individual_results
-        )
+        agreement_ratio, agree_count, total_models = self._compute_agreement(individual_results)
 
         # Disagreement analysis
         disagreement_details = self._analyze_disagreements(individual_results)
@@ -254,8 +247,12 @@ class MultiModelConsensusDetector(BaseDetector):
                 "num_models": total_models,
                 "models_agreeing": agree_count,
                 "weighted_score": round(consensus_score, 4),
-                "unweighted_score": round(
-                    sum(r["ai_score"] for r in individual_results) / len(individual_results), 4
-                ) if individual_results else 0.5,
+                "unweighted_score": (
+                    round(
+                        sum(r["ai_score"] for r in individual_results) / len(individual_results), 4
+                    )
+                    if individual_results
+                    else 0.5
+                ),
             },
         }

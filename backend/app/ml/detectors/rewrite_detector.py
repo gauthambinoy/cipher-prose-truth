@@ -9,9 +9,7 @@ of rewritten AI content.
 from __future__ import annotations
 
 import logging
-import math
 import re
-from collections import Counter
 from typing import Any, Dict, List
 
 from app.ml.detectors.base import BaseDetector
@@ -21,38 +19,116 @@ logger = logging.getLogger(__name__)
 # ── Wordlists for heuristic checks ──────────────────────────────────────
 
 _FORCED_CONTRACTIONS = {
-    "it's", "don't", "doesn't", "won't", "can't", "couldn't", "wouldn't",
-    "shouldn't", "isn't", "aren't", "wasn't", "weren't", "hadn't", "hasn't",
-    "haven't", "didn't", "they're", "we're", "you're", "i'm", "he's",
-    "she's", "that's", "there's", "here's", "who's", "what's", "let's",
+    "it's",
+    "don't",
+    "doesn't",
+    "won't",
+    "can't",
+    "couldn't",
+    "wouldn't",
+    "shouldn't",
+    "isn't",
+    "aren't",
+    "wasn't",
+    "weren't",
+    "hadn't",
+    "hasn't",
+    "haven't",
+    "didn't",
+    "they're",
+    "we're",
+    "you're",
+    "i'm",
+    "he's",
+    "she's",
+    "that's",
+    "there's",
+    "here's",
+    "who's",
+    "what's",
+    "let's",
 }
 
 _AI_TRANSITION_WORDS = {
-    "furthermore", "moreover", "additionally", "consequently", "nevertheless",
-    "nonetheless", "henceforth", "subsequently", "in conclusion",
-    "in summary", "to summarize", "it is worth noting", "it should be noted",
-    "it is important to note", "in this regard", "in light of",
-    "with respect to", "in terms of", "on the other hand",
-    "as a result", "in addition", "for instance", "for example",
-    "in particular", "specifically", "notably", "significantly",
-    "ultimately", "fundamentally", "essentially", "interestingly",
+    "furthermore",
+    "moreover",
+    "additionally",
+    "consequently",
+    "nevertheless",
+    "nonetheless",
+    "henceforth",
+    "subsequently",
+    "in conclusion",
+    "in summary",
+    "to summarize",
+    "it is worth noting",
+    "it should be noted",
+    "it is important to note",
+    "in this regard",
+    "in light of",
+    "with respect to",
+    "in terms of",
+    "on the other hand",
+    "as a result",
+    "in addition",
+    "for instance",
+    "for example",
+    "in particular",
+    "specifically",
+    "notably",
+    "significantly",
+    "ultimately",
+    "fundamentally",
+    "essentially",
+    "interestingly",
 }
 
 _AWKWARD_SYNONYMS = {
-    "utilize": "use", "commence": "start", "terminate": "end",
-    "facilitate": "help", "endeavor": "try", "ascertain": "find out",
-    "elucidate": "explain", "ameliorate": "improve", "paradigm": "model",
-    "synergy": "teamwork", "leverage": "use", "optimize": "improve",
-    "implement": "do", "conceptualize": "think of", "incentivize": "encourage",
-    "problematic": "bad", "methodology": "method", "aforementioned": "mentioned",
-    "heretofore": "before", "notwithstanding": "despite", "pertaining": "about",
-    "vis-a-vis": "about", "plethora": "many", "myriad": "many",
+    "utilize": "use",
+    "commence": "start",
+    "terminate": "end",
+    "facilitate": "help",
+    "endeavor": "try",
+    "ascertain": "find out",
+    "elucidate": "explain",
+    "ameliorate": "improve",
+    "paradigm": "model",
+    "synergy": "teamwork",
+    "leverage": "use",
+    "optimize": "improve",
+    "implement": "do",
+    "conceptualize": "think of",
+    "incentivize": "encourage",
+    "problematic": "bad",
+    "methodology": "method",
+    "aforementioned": "mentioned",
+    "heretofore": "before",
+    "notwithstanding": "despite",
+    "pertaining": "about",
+    "vis-a-vis": "about",
+    "plethora": "many",
+    "myriad": "many",
 }
 
 _TOPIC_STARTERS = {
-    "one", "another", "first", "second", "third", "finally", "the",
-    "this", "these", "in", "additionally", "moreover", "furthermore",
-    "however", "while", "although", "when", "it",
+    "one",
+    "another",
+    "first",
+    "second",
+    "third",
+    "finally",
+    "the",
+    "this",
+    "these",
+    "in",
+    "additionally",
+    "moreover",
+    "furthermore",
+    "however",
+    "while",
+    "although",
+    "when",
+    "it",
 }
 
 
@@ -63,14 +139,14 @@ class RewriteDetector(BaseDetector):
 
     @staticmethod
     def _sentence_split(text: str) -> List[str]:
-        sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+        sentences = re.split(r"(?<=[.!?])\s+", text.strip())
         return [s.strip() for s in sentences if len(s.strip()) > 5]
 
     @staticmethod
     def _paragraph_split(text: str) -> List[str]:
-        paragraphs = [p.strip() for p in re.split(r'\n\s*\n', text) if p.strip()]
+        paragraphs = [p.strip() for p in re.split(r"\n\s*\n", text) if p.strip()]
         if not paragraphs:
-            paragraphs = [p.strip() for p in text.split('\n') if p.strip()]
+            paragraphs = [p.strip() for p in text.split("\n") if p.strip()]
         if not paragraphs:
             paragraphs = [text.strip()] if text.strip() else []
         return paragraphs
@@ -93,14 +169,17 @@ class RewriteDetector(BaseDetector):
         # (a) Sentence length variation: too-perfect variation is suspicious
         sent_lengths = [len(s.split()) for s in sentences]
         if len(sent_lengths) >= 4:
-            diffs = [abs(sent_lengths[i + 1] - sent_lengths[i]) for i in range(len(sent_lengths) - 1)]
-            avg_diff = sum(diffs) / len(diffs) if diffs else 0
-            std_diff = (sum((d - avg_diff) ** 2 for d in diffs) / len(diffs)) ** 0.5 if diffs else 0
             # Perfectly alternating lengths (short-long-short) is suspicious
             # Natural text has clustered lengths with occasional outliers
             # CoV of diffs near 0.3-0.5 is suspicious (too controlled)
             mean_len = sum(sent_lengths) / len(sent_lengths) if sent_lengths else 1
-            cov = (sum((l - mean_len) ** 2 for l in sent_lengths) / len(sent_lengths)) ** 0.5 / mean_len if mean_len > 0 else 0
+            cov = (
+                (sum((length - mean_len) ** 2 for length in sent_lengths) / len(sent_lengths))
+                ** 0.5
+                / mean_len
+                if mean_len > 0
+                else 0
+            )
             # Natural CoV is usually > 0.5 or < 0.2. The 0.25-0.45 range is "engineered"
             if 0.2 <= cov <= 0.5:
                 variation_score = 1.0 - abs(cov - 0.35) / 0.15
@@ -137,7 +216,7 @@ class RewriteDetector(BaseDetector):
         synonym_score = self._clamp(synonym_density / 3.0)
         scores.append(synonym_score)
 
-        combined = (variation_score * 0.4 + contraction_score * 0.3 + synonym_score * 0.3)
+        combined = variation_score * 0.4 + contraction_score * 0.3 + synonym_score * 0.3
 
         return {
             "over_humanization_score": round(combined, 4),
@@ -151,7 +230,9 @@ class RewriteDetector(BaseDetector):
 
     # ── Signal 2: Residual AI patterns ───────────────────────────────────
 
-    def _detect_residual_ai_patterns(self, text: str, sentences: List[str], paragraphs: List[str]) -> Dict[str, Any]:
+    def _detect_residual_ai_patterns(
+        self, text: str, sentences: List[str], paragraphs: List[str]
+    ) -> Dict[str, Any]:
         """
         Detect AI patterns that survive paraphrasing:
         - Consistent paragraph structure
@@ -164,7 +245,9 @@ class RewriteDetector(BaseDetector):
         para_sent_counts = [len(self._sentence_split(p)) for p in paragraphs]
         if len(para_sent_counts) >= 3:
             mean_count = sum(para_sent_counts) / len(para_sent_counts)
-            std_count = (sum((c - mean_count) ** 2 for c in para_sent_counts) / len(para_sent_counts)) ** 0.5
+            std_count = (
+                sum((c - mean_count) ** 2 for c in para_sent_counts) / len(para_sent_counts)
+            ) ** 0.5
             cov_para = std_count / mean_count if mean_count > 0 else 0
             # Very uniform paragraph sizes = AI pattern
             structure_score = self._clamp(1.0 - cov_para * 2)
@@ -180,7 +263,11 @@ class RewriteDetector(BaseDetector):
             for p in paragraphs:
                 first_sent = self._sentence_split(p)
                 if first_sent:
-                    first_word = first_sent[0].split()[0].lower().rstrip('.,;:') if first_sent[0].split() else ""
+                    first_word = (
+                        first_sent[0].split()[0].lower().rstrip(".,;:")
+                        if first_sent[0].split()
+                        else ""
+                    )
                     if first_word in _TOPIC_STARTERS:
                         topic_pattern_count += 1
             topic_ratio = topic_pattern_count / len(paragraphs)
@@ -201,7 +288,7 @@ class RewriteDetector(BaseDetector):
         tangent_score = self._clamp(transition_density / 0.8)
         scores.append(tangent_score)
 
-        combined = (structure_score * 0.35 + topic_score * 0.35 + tangent_score * 0.3)
+        combined = structure_score * 0.35 + topic_score * 0.35 + tangent_score * 0.3
 
         return {
             "residual_pattern_score": round(combined, 4),
@@ -231,7 +318,7 @@ class RewriteDetector(BaseDetector):
         total_words = len(words) or 1
 
         # (a) Punctuation variety
-        punct_types = set(re.findall(r'[^\w\s]', text))
+        punct_types = set(re.findall(r"[^\w\s]", text))
         # Natural text uses 5+ punctuation types (. , ! ? ; : - " ' ...)
         punct_variety_score = self._clamp(len(punct_types) / 8.0)
         # Low variety = less natural (rewritten text often strips punctuation variety)
@@ -239,16 +326,34 @@ class RewriteDetector(BaseDetector):
         scores.append(naturalness_from_punct)
 
         # (b) Personal pronouns (natural text uses more first-person)
-        first_person = sum(1 for w in words if w in {"i", "me", "my", "mine", "myself", "we", "us", "our", "ours"})
+        first_person = sum(
+            1 for w in words if w in {"i", "me", "my", "mine", "myself", "we", "us", "our", "ours"}
+        )
         pronoun_ratio = first_person / total_words
         # Natural human writing: > 2% first-person pronouns
         pronoun_naturalness = self._clamp(pronoun_ratio / 0.03)
         scores.append(pronoun_naturalness)
 
         # (c) Filler/hedging words (natural text has some hedging)
-        fillers = {"actually", "basically", "honestly", "literally", "probably",
-                   "maybe", "perhaps", "sort of", "kind of", "like", "well",
-                   "anyway", "really", "pretty", "quite", "somewhat", "guess"}
+        fillers = {
+            "actually",
+            "basically",
+            "honestly",
+            "literally",
+            "probably",
+            "maybe",
+            "perhaps",
+            "sort of",
+            "kind of",
+            "like",
+            "well",
+            "anyway",
+            "really",
+            "pretty",
+            "quite",
+            "somewhat",
+            "guess",
+        }
         filler_count = sum(1 for w in words if w in fillers)
         filler_ratio = filler_count / total_words
         filler_naturalness = self._clamp(filler_ratio / 0.02)
@@ -320,8 +425,10 @@ class RewriteDetector(BaseDetector):
             }
 
         mean_c = sum(per_sentence_complexity) / len(per_sentence_complexity)
-        variance = sum((c - mean_c) ** 2 for c in per_sentence_complexity) / len(per_sentence_complexity)
-        std_c = variance ** 0.5
+        variance = sum((c - mean_c) ** 2 for c in per_sentence_complexity) / len(
+            per_sentence_complexity
+        )
+        std_c = variance**0.5
         cov = std_c / mean_c if mean_c > 0 else 0
 
         # High CoV in complexity = inconsistent register = rewrite signal

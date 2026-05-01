@@ -24,7 +24,10 @@ logger = logging.getLogger(__name__)
 _MODELS = ("distilgpt2", "gpt2", "gpt2-medium")
 MAX_LENGTH = 512
 _CLF_PATH = os.path.join(
-    os.path.dirname(__file__), "..", "weights", "ghostbuster_clf.pkl",
+    os.path.dirname(__file__),
+    "..",
+    "weights",
+    "ghostbuster_clf.pkl",
 )
 
 
@@ -48,17 +51,29 @@ class GhostbusterDetector(BaseDetector):
     def _token_features(text: str, model, tokenizer) -> Dict[str, float]:
         device = next(model.parameters()).device
         enc = tokenizer(
-            text, return_tensors="pt", truncation=True, max_length=MAX_LENGTH,
+            text,
+            return_tensors="pt",
+            truncation=True,
+            max_length=MAX_LENGTH,
         ).to(device)
         input_ids = enc["input_ids"]
         seq_len = input_ids.size(1)
 
         if seq_len < 2:
-            return {k: 0.0 for k in (
-                "mean_token_prob", "std_token_prob", "mean_rank", "std_rank",
-                "top10_ratio", "top100_ratio", "top1000_ratio",
-                "mean_entropy", "std_entropy",
-            )}
+            return {
+                k: 0.0
+                for k in (
+                    "mean_token_prob",
+                    "std_token_prob",
+                    "mean_rank",
+                    "std_rank",
+                    "top10_ratio",
+                    "top100_ratio",
+                    "top1000_ratio",
+                    "mean_entropy",
+                    "std_entropy",
+                )
+            }
 
         logits = model(**enc).logits
         probs = torch.softmax(logits[0, :-1], dim=-1)
@@ -67,12 +82,17 @@ class GhostbusterDetector(BaseDetector):
         token_probs = probs[torch.arange(len(target_ids)), target_ids].cpu().numpy()
 
         sorted_idx = probs.argsort(dim=-1, descending=True)
-        ranks = np.array([
-            int((sorted_idx[i] == target_ids[i]).nonzero(as_tuple=True)[0].item())
-            if len((sorted_idx[i] == target_ids[i]).nonzero(as_tuple=True)[0]) > 0
-            else probs.size(-1)
-            for i in range(len(target_ids))
-        ], dtype=float)
+        ranks = np.array(
+            [
+                (
+                    int((sorted_idx[i] == target_ids[i]).nonzero(as_tuple=True)[0].item())
+                    if len((sorted_idx[i] == target_ids[i]).nonzero(as_tuple=True)[0]) > 0
+                    else probs.size(-1)
+                )
+                for i in range(len(target_ids))
+            ],
+            dtype=float,
+        )
 
         log_p = torch.log(probs + 1e-10)
         entropy = -(probs * log_p).sum(dim=-1).cpu().numpy()
@@ -98,8 +118,12 @@ class GhostbusterDetector(BaseDetector):
             feats = self._token_features(text, model, tokenizer)
             model_feats_list.append(feats)
             for key in (
-                "mean_token_prob", "std_token_prob", "mean_rank",
-                "top10_ratio", "top100_ratio", "mean_entropy",
+                "mean_token_prob",
+                "std_token_prob",
+                "mean_rank",
+                "top10_ratio",
+                "top100_ratio",
+                "mean_entropy",
             ):
                 all_feats.append(feats[key])
 
@@ -107,8 +131,7 @@ class GhostbusterDetector(BaseDetector):
         for i in range(len(_MODELS)):
             for j in range(i + 1, len(_MODELS)):
                 all_feats.append(
-                    model_feats_list[i]["mean_token_prob"]
-                    - model_feats_list[j]["mean_token_prob"]
+                    model_feats_list[i]["mean_token_prob"] - model_feats_list[j]["mean_token_prob"]
                 )
 
         # cross-model entropy ratio
@@ -150,9 +173,7 @@ class GhostbusterDetector(BaseDetector):
 
         ai_prob = self._clamp(ai_prob)
         confidence = (
-            "high" if abs(ai_prob - 0.5) > 0.3
-            else "medium" if abs(ai_prob - 0.5) > 0.15
-            else "low"
+            "high" if abs(ai_prob - 0.5) > 0.3 else "medium" if abs(ai_prob - 0.5) > 0.15 else "low"
         )
 
         return {

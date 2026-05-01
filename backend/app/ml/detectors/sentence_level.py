@@ -31,7 +31,7 @@ class SentenceLevelDetector(BaseDetector):
 
     @staticmethod
     def _sentence_split(text: str) -> List[str]:
-        sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+        sentences = re.split(r"(?<=[.!?])\s+", text.strip())
         return [s.strip() for s in sentences if len(s.strip()) > 10]
 
     # ── fast signal: perplexity ─────────────────────────────────────────
@@ -42,7 +42,10 @@ class SentenceLevelDetector(BaseDetector):
         """Return AI probability based on perplexity (lower ppl -> more AI)."""
         device = next(model.parameters()).device
         enc = tokenizer(
-            sentence, return_tensors="pt", truncation=True, max_length=MAX_LENGTH,
+            sentence,
+            return_tensors="pt",
+            truncation=True,
+            max_length=MAX_LENGTH,
         ).to(device)
         input_ids = enc["input_ids"]
         if input_ids.size(1) < 2:
@@ -64,7 +67,10 @@ class SentenceLevelDetector(BaseDetector):
         """Return AI probability based on GLTR top-10 ratio."""
         device = next(model.parameters()).device
         enc = tokenizer(
-            sentence, return_tensors="pt", truncation=True, max_length=MAX_LENGTH,
+            sentence,
+            return_tensors="pt",
+            truncation=True,
+            max_length=MAX_LENGTH,
         ).to(device)
         input_ids = enc["input_ids"]
         seq_len = input_ids.size(1)
@@ -104,9 +110,7 @@ class SentenceLevelDetector(BaseDetector):
                 result = result[0]
             label = result.get("label", "").lower().strip()
             score = float(result.get("score", 0.5))
-            if label in self._AI_LABELS or any(
-                k in label for k in ("ai", "fake", "machine")
-            ):
+            if label in self._AI_LABELS or any(k in label for k in ("ai", "fake", "machine")):
                 return score
             return 1.0 - score
         except Exception as exc:
@@ -144,17 +148,19 @@ class SentenceLevelDetector(BaseDetector):
             else:
                 label = "uncertain"
 
-            per_sentence.append({
-                "index": idx,
-                "text": sent[:200],  # truncate for response size
-                "ai_probability": round(combined, 4),
-                "label": label,
-                "sub_scores": {
-                    "perplexity": round(ppl_score, 4),
-                    "gltr": round(gltr_score, 4),
-                    "zero_shot": round(zs_score, 4),
-                },
-            })
+            per_sentence.append(
+                {
+                    "index": idx,
+                    "text": sent[:200],  # truncate for response size
+                    "ai_probability": round(combined, 4),
+                    "label": label,
+                    "sub_scores": {
+                        "perplexity": round(ppl_score, 4),
+                        "gltr": round(gltr_score, 4),
+                        "zero_shot": round(zs_score, 4),
+                    },
+                }
+            )
 
         total = len(sentences)
         ai_pct = ai_count / total
@@ -167,9 +173,9 @@ class SentenceLevelDetector(BaseDetector):
         overall_ai = float(np.mean([s["ai_probability"] for s in per_sentence]))
 
         confidence = (
-            "high" if abs(overall_ai - 0.5) > 0.3
-            else "medium" if abs(overall_ai - 0.5) > 0.15
-            else "low"
+            "high"
+            if abs(overall_ai - 0.5) > 0.3
+            else "medium" if abs(overall_ai - 0.5) > 0.15 else "low"
         )
 
         return {

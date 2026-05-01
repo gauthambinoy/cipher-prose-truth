@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -127,9 +127,27 @@ _WORDINESS: List[Tuple[str, str]] = [
 ]
 
 _WEAK_VERBS: set[str] = {
-    "is", "am", "are", "was", "were", "be", "been", "being",
-    "have", "has", "had", "get", "gets", "got", "gotten",
-    "do", "does", "did", "make", "makes", "made",
+    "is",
+    "am",
+    "are",
+    "was",
+    "were",
+    "be",
+    "been",
+    "being",
+    "have",
+    "has",
+    "had",
+    "get",
+    "gets",
+    "got",
+    "gotten",
+    "do",
+    "does",
+    "did",
+    "make",
+    "makes",
+    "made",
 }
 
 
@@ -137,10 +155,12 @@ def _load_spacy():
     """Lazy-load spaCy model."""
     try:
         import spacy
+
         try:
             return spacy.load("en_core_web_sm")
         except OSError:
             from spacy.cli import download
+
             download("en_core_web_sm")
             return spacy.load("en_core_web_sm")
     except ImportError:
@@ -179,12 +199,14 @@ class GrammarChecker:
 
         passive_info = self._check_passive_voice(sentences, doc)
         if passive_info["overuse"]:
-            errors.append({
-                "type": "grammar",
-                "message": f"Passive voice overuse: {passive_info['percentage']:.0f}% of sentences use passive voice (threshold: 30%)",
-                "position": None,
-                "suggestion": "Rewrite some passive sentences in active voice for stronger writing.",
-            })
+            errors.append(
+                {
+                    "type": "grammar",
+                    "message": f"Passive voice overuse: {passive_info['percentage']:.0f}% of sentences use passive voice (threshold: 30%)",
+                    "position": None,
+                    "suggestion": "Rewrite some passive sentences in active voice for stronger writing.",
+                }
+            )
 
         # Style checks
         style_issues.extend(self._check_cliches(text))
@@ -227,12 +249,14 @@ class GrammarChecker:
         issues = []
         pattern = re.compile(r"\b(\w+)\s+\1\b", re.IGNORECASE)
         for match in pattern.finditer(text):
-            issues.append({
-                "type": "grammar",
-                "message": f"Repeated word: '{match.group(1)}'",
-                "position": {"start": match.start(), "end": match.end()},
-                "suggestion": f"Remove the duplicate '{match.group(1)}'.",
-            })
+            issues.append(
+                {
+                    "type": "grammar",
+                    "message": f"Repeated word: '{match.group(1)}'",
+                    "position": {"start": match.start(), "end": match.end()},
+                    "suggestion": f"Remove the duplicate '{match.group(1)}'.",
+                }
+            )
         return issues
 
     def _check_double_negatives(self, text: str) -> List[Dict[str, Any]]:
@@ -244,12 +268,14 @@ class GrammarChecker:
         ]
         for pat in patterns:
             for match in re.finditer(pat, text, re.IGNORECASE):
-                issues.append({
-                    "type": "grammar",
-                    "message": f"Possible double negative: '{match.group()}'",
-                    "position": {"start": match.start(), "end": match.end()},
-                    "suggestion": "Rewrite to use a single negative for clarity.",
-                })
+                issues.append(
+                    {
+                        "type": "grammar",
+                        "message": f"Possible double negative: '{match.group()}'",
+                        "position": {"start": match.start(), "end": match.end()},
+                        "suggestion": "Rewrite to use a single negative for clarity.",
+                    }
+                )
         return issues
 
     def _check_run_on_sentences(self, sentences: List[str]) -> List[Dict[str, Any]]:
@@ -259,41 +285,41 @@ class GrammarChecker:
         for sent in sentences:
             word_count = len(sent.split())
             if word_count > 50:
-                issues.append({
-                    "type": "grammar",
-                    "message": f"Run-on sentence ({word_count} words). Consider breaking it up.",
-                    "position": {"start": offset, "end": offset + len(sent)},
-                    "suggestion": "Split this into two or more shorter sentences.",
-                })
+                issues.append(
+                    {
+                        "type": "grammar",
+                        "message": f"Run-on sentence ({word_count} words). Consider breaking it up.",
+                        "position": {"start": offset, "end": offset + len(sent)},
+                        "suggestion": "Split this into two or more shorter sentences.",
+                    }
+                )
             offset += len(sent) + 1
         return issues
 
-    def _check_sentence_fragments(
-        self, sentences: List[str], doc
-    ) -> List[Dict[str, Any]]:
+    def _check_sentence_fragments(self, sentences: List[str], doc) -> List[Dict[str, Any]]:
         """Detect sentence fragments (no main verb)."""
         issues = []
         if doc is None:
             return issues
 
-        import spacy
         # Process each sentence individually for accuracy
         offset = 0
         for sent_text in sentences:
             sent_doc = self.nlp(sent_text)
             has_verb = any(
-                token.pos_ in ("VERB", "AUX") and token.dep_ != "amod"
-                for token in sent_doc
+                token.pos_ in ("VERB", "AUX") and token.dep_ != "amod" for token in sent_doc
             )
             word_count = len(sent_text.split())
             # Only flag as fragment if more than 3 words and no verb
             if not has_verb and word_count > 3:
-                issues.append({
-                    "type": "grammar",
-                    "message": f"Possible sentence fragment (no main verb detected): '{sent_text[:60]}...'",
-                    "position": {"start": offset, "end": offset + len(sent_text)},
-                    "suggestion": "Add a verb or combine with an adjacent sentence.",
-                })
+                issues.append(
+                    {
+                        "type": "grammar",
+                        "message": f"Possible sentence fragment (no main verb detected): '{sent_text[:60]}...'",
+                        "position": {"start": offset, "end": offset + len(sent_text)},
+                        "suggestion": "Add a verb or combine with an adjacent sentence.",
+                    }
+                )
             offset += len(sent_text) + 1
         return issues
 
@@ -310,12 +336,14 @@ class GrammarChecker:
         ]
         for pattern, suggestion in patterns:
             for match in re.finditer(pattern, text, re.IGNORECASE):
-                issues.append({
-                    "type": "grammar",
-                    "message": f"Possible subject-verb agreement issue: '{match.group()}'",
-                    "position": {"start": match.start(), "end": match.end()},
-                    "suggestion": suggestion,
-                })
+                issues.append(
+                    {
+                        "type": "grammar",
+                        "message": f"Possible subject-verb agreement issue: '{match.group()}'",
+                        "position": {"start": match.start(), "end": match.end()},
+                        "suggestion": suggestion,
+                    }
+                )
         return issues
 
     def _check_comma_splices(self, text: str) -> List[Dict[str, Any]]:
@@ -327,12 +355,14 @@ class GrammarChecker:
             re.IGNORECASE,
         )
         for match in pattern.finditer(text):
-            issues.append({
-                "type": "grammar",
-                "message": f"Possible comma splice near: '...{text[max(0,match.start()-20):match.end()+10]}...'",
-                "position": {"start": match.start(), "end": match.end()},
-                "suggestion": "Use a semicolon, period, or conjunction instead of a comma.",
-            })
+            issues.append(
+                {
+                    "type": "grammar",
+                    "message": f"Possible comma splice near: '...{text[max(0,match.start()-20):match.end()+10]}...'",
+                    "position": {"start": match.start(), "end": match.end()},
+                    "suggestion": "Use a semicolon, period, or conjunction instead of a comma.",
+                }
+            )
         return issues
 
     def _check_missing_articles(self, doc) -> List[Dict[str, Any]]:
@@ -368,17 +398,17 @@ class GrammarChecker:
                     has_det = True
 
                 if not has_det:
-                    issues.append({
-                        "type": "grammar",
-                        "message": f"Possible missing article before '{token.text}'",
-                        "position": {"start": token.idx, "end": token.idx + len(token.text)},
-                        "suggestion": f"Consider adding 'a', 'an', or 'the' before '{token.text}'.",
-                    })
+                    issues.append(
+                        {
+                            "type": "grammar",
+                            "message": f"Possible missing article before '{token.text}'",
+                            "position": {"start": token.idx, "end": token.idx + len(token.text)},
+                            "suggestion": f"Consider adding 'a', 'an', or 'the' before '{token.text}'.",
+                        }
+                    )
         return issues
 
-    def _check_passive_voice(
-        self, sentences: List[str], doc
-    ) -> Dict[str, Any]:
+    def _check_passive_voice(self, sentences: List[str], doc) -> Dict[str, Any]:
         """Count passive voice sentences."""
         if doc is None or not sentences:
             return {"overuse": False, "percentage": 0.0, "count": 0}
@@ -409,12 +439,14 @@ class GrammarChecker:
         for cliche in _CLICHES:
             idx = text_lower.find(cliche)
             if idx != -1:
-                issues.append({
-                    "type": "style",
-                    "message": f"Cliche detected: '{cliche}'",
-                    "position": {"start": idx, "end": idx + len(cliche)},
-                    "suggestion": "Consider replacing this cliche with more original phrasing.",
-                })
+                issues.append(
+                    {
+                        "type": "style",
+                        "message": f"Cliche detected: '{cliche}'",
+                        "position": {"start": idx, "end": idx + len(cliche)},
+                        "suggestion": "Consider replacing this cliche with more original phrasing.",
+                    }
+                )
         return issues
 
     def _check_wordiness(self, text: str) -> List[Dict[str, Any]]:
@@ -424,12 +456,14 @@ class GrammarChecker:
         for verbose, concise in _WORDINESS:
             idx = text_lower.find(verbose)
             if idx != -1:
-                issues.append({
-                    "type": "style",
-                    "message": f"Wordy phrase: '{verbose}'",
-                    "position": {"start": idx, "end": idx + len(verbose)},
-                    "suggestion": f"Replace with '{concise}'.",
-                })
+                issues.append(
+                    {
+                        "type": "style",
+                        "message": f"Wordy phrase: '{verbose}'",
+                        "position": {"start": idx, "end": idx + len(verbose)},
+                        "suggestion": f"Replace with '{concise}'.",
+                    }
+                )
         return issues
 
     def _check_adverb_overuse(self, doc) -> List[Dict[str, Any]]:
@@ -439,20 +473,21 @@ class GrammarChecker:
             return issues
 
         ly_adverbs = [
-            token for token in doc
-            if token.pos_ == "ADV" and token.text.lower().endswith("ly")
+            token for token in doc if token.pos_ == "ADV" and token.text.lower().endswith("ly")
         ]
         total = len(doc) or 1
         ratio = len(ly_adverbs) / total
 
         if ratio > 0.05:
             adverb_examples = [a.text for a in ly_adverbs[:5]]
-            issues.append({
-                "type": "style",
-                "message": f"Adverb overuse: {len(ly_adverbs)} -ly adverbs found ({ratio*100:.1f}% of words). Examples: {', '.join(adverb_examples)}",
-                "position": None,
-                "suggestion": "Reduce adverb usage by choosing stronger verbs.",
-            })
+            issues.append(
+                {
+                    "type": "style",
+                    "message": f"Adverb overuse: {len(ly_adverbs)} -ly adverbs found ({ratio*100:.1f}% of words). Examples: {', '.join(adverb_examples)}",
+                    "position": None,
+                    "suggestion": "Reduce adverb usage by choosing stronger verbs.",
+                }
+            )
         return issues
 
     def _check_weak_verbs(self, doc) -> List[Dict[str, Any]]:
@@ -469,10 +504,12 @@ class GrammarChecker:
         ratio = weak_count / len(verb_tokens)
 
         if ratio > 0.5 and weak_count > 5:
-            issues.append({
-                "type": "style",
-                "message": f"Weak verb overuse: {weak_count}/{len(verb_tokens)} verbs ({ratio*100:.0f}%) are weak verbs (is, was, have, get, etc.)",
-                "position": None,
-                "suggestion": "Replace weak verbs with stronger, more specific alternatives.",
-            })
+            issues.append(
+                {
+                    "type": "style",
+                    "message": f"Weak verb overuse: {weak_count}/{len(verb_tokens)} verbs ({ratio*100:.0f}%) are weak verbs (is, was, have, get, etc.)",
+                    "position": None,
+                    "suggestion": "Replace weak verbs with stronger, more specific alternatives.",
+                }
+            )
         return issues

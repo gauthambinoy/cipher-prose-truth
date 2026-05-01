@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import logging
 import re
-from collections import defaultdict
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -49,6 +48,7 @@ class ParaphraseDetector:
         if self._model is None:
             try:
                 from sentence_transformers import SentenceTransformer
+
                 self._model = SentenceTransformer("all-MiniLM-L6-v2")
                 logger.info("ParaphraseDetector: sentence-transformer model loaded.")
             except ImportError:
@@ -64,9 +64,7 @@ class ParaphraseDetector:
     # Core similarity computation
     # ------------------------------------------------------------------
 
-    def _compute_similarity_matrix(
-        self, sentences: List[str]
-    ) -> Optional[np.ndarray]:
+    def _compute_similarity_matrix(self, sentences: List[str]) -> Optional[np.ndarray]:
         """Encode all sentences and return an NxN cosine similarity matrix."""
         model = self._get_model()
         if model is None:

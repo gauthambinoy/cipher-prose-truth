@@ -37,7 +37,10 @@ class WatermarkDetector(BaseDetector):
     def _compute_z_score(text: str, model, tokenizer) -> dict:
         device = next(model.parameters()).device
         enc = tokenizer(
-            text, return_tensors="pt", truncation=True, max_length=MAX_LENGTH,
+            text,
+            return_tensors="pt",
+            truncation=True,
+            max_length=MAX_LENGTH,
         ).to(device)
         input_ids = enc["input_ids"][0]
         seq_len = len(input_ids)
@@ -85,11 +88,7 @@ class WatermarkDetector(BaseDetector):
         else:
             ai_prob = self._clamp(0.3 * self._sigmoid(z))
 
-        confidence = (
-            "high" if watermark_detected
-            else "medium" if possible_watermark
-            else "low"
-        )
+        confidence = "high" if watermark_detected else "medium" if possible_watermark else "low"
 
         return {
             "signal": signal,

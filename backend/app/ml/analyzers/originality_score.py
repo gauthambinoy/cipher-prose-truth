@@ -12,7 +12,7 @@ import logging
 import math
 import re
 from collections import Counter
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +49,7 @@ def _categorize(score: float) -> str:
 # Sub-scorers
 # ---------------------------------------------------------------------------
 
+
 def _vocabulary_uniqueness(text: str) -> Dict[str, Any]:
     """
     Compute vocabulary uniqueness metrics.
@@ -80,14 +81,73 @@ def _vocabulary_uniqueness(text: str) -> Dict[str, Any]:
 
     # Common words ratio (lower = more original)
     COMMON_WORDS = {
-        "the", "is", "are", "was", "were", "be", "been", "being",
-        "have", "has", "had", "do", "does", "did", "will", "would",
-        "could", "should", "may", "might", "shall", "can", "need",
-        "a", "an", "and", "or", "but", "in", "on", "at", "to", "for",
-        "of", "with", "by", "from", "it", "this", "that", "these",
-        "those", "i", "you", "he", "she", "we", "they", "my", "your",
-        "his", "her", "its", "our", "their", "not", "no", "so", "if",
-        "as", "very", "just", "about", "up", "out", "then", "than",
+        "the",
+        "is",
+        "are",
+        "was",
+        "were",
+        "be",
+        "been",
+        "being",
+        "have",
+        "has",
+        "had",
+        "do",
+        "does",
+        "did",
+        "will",
+        "would",
+        "could",
+        "should",
+        "may",
+        "might",
+        "shall",
+        "can",
+        "need",
+        "a",
+        "an",
+        "and",
+        "or",
+        "but",
+        "in",
+        "on",
+        "at",
+        "to",
+        "for",
+        "of",
+        "with",
+        "by",
+        "from",
+        "it",
+        "this",
+        "that",
+        "these",
+        "those",
+        "i",
+        "you",
+        "he",
+        "she",
+        "we",
+        "they",
+        "my",
+        "your",
+        "his",
+        "her",
+        "its",
+        "our",
+        "their",
+        "not",
+        "no",
+        "so",
+        "if",
+        "as",
+        "very",
+        "just",
+        "about",
+        "up",
+        "out",
+        "then",
+        "than",
     }
     common_count = sum(1 for w in words if w in COMMON_WORDS)
     common_ratio = common_count / max(word_count, 1)
@@ -100,12 +160,7 @@ def _vocabulary_uniqueness(text: str) -> Dict[str, Any]:
     variety_score = min(length_variety / 3.0, 1.0) * 100
     richness_score = min(non_common_ratio / 0.7, 1.0) * 100
 
-    final = (
-        ttr_score * 0.35
-        + hapax_score * 0.25
-        + variety_score * 0.15
-        + richness_score * 0.25
-    )
+    final = ttr_score * 0.35 + hapax_score * 0.25 + variety_score * 0.15 + richness_score * 0.25
 
     return {
         "score": round(max(0, min(100, final)), 2),
@@ -143,16 +198,16 @@ def _structural_originality(text: str) -> Dict[str, Any]:
     if len(paragraphs) > 1:
         para_lengths = [len(p.split()) for p in paragraphs]
         para_mean = sum(para_lengths) / len(para_lengths)
-        para_var = sum((l - para_mean) ** 2 for l in para_lengths) / len(para_lengths)
-        para_cv = (para_var ** 0.5) / max(para_mean, 1)  # coefficient of variation
+        para_var = sum((length - para_mean) ** 2 for length in para_lengths) / len(para_lengths)
+        para_cv = (para_var**0.5) / max(para_mean, 1)  # coefficient of variation
     else:
         para_cv = 0.3  # neutral
 
     # Sentence length variance
     sent_lengths = [len(s.split()) for s in sentences]
     sent_mean = sum(sent_lengths) / len(sent_lengths)
-    sent_var = sum((l - sent_mean) ** 2 for l in sent_lengths) / len(sent_lengths)
-    sent_cv = (sent_var ** 0.5) / max(sent_mean, 1)
+    sent_var = sum((length - sent_mean) ** 2 for length in sent_lengths) / len(sent_lengths)
+    sent_cv = (sent_var**0.5) / max(sent_mean, 1)
 
     # Sentence starter diversity
     starters = [s.split()[0].lower() if s.split() else "" for s in sentences]
@@ -161,15 +216,21 @@ def _structural_originality(text: str) -> Dict[str, Any]:
 
     # Formulaic transition check
     FORMULAIC_TRANSITIONS = [
-        r"\bfurthermore\b", r"\bmoreover\b", r"\badditionally\b",
-        r"\bin conclusion\b", r"\bin summary\b", r"\bto summarize\b",
-        r"\bfirstly\b", r"\bsecondly\b", r"\bthirdly\b",
-        r"\bin addition\b", r"\bconsequently\b", r"\btherefore\b",
+        r"\bfurthermore\b",
+        r"\bmoreover\b",
+        r"\badditionally\b",
+        r"\bin conclusion\b",
+        r"\bin summary\b",
+        r"\bto summarize\b",
+        r"\bfirstly\b",
+        r"\bsecondly\b",
+        r"\bthirdly\b",
+        r"\bin addition\b",
+        r"\bconsequently\b",
+        r"\btherefore\b",
     ]
     lower = text.lower()
-    transition_hits = sum(
-        len(re.findall(pat, lower)) for pat in FORMULAIC_TRANSITIONS
-    )
+    transition_hits = sum(len(re.findall(pat, lower)) for pat in FORMULAIC_TRANSITIONS)
     transition_density = transition_hits / max(len(sentences), 1)
 
     # Numbered/bullet list detection
@@ -287,14 +348,18 @@ class OriginalityScorer:
                 "vocabulary_uniqueness": {
                     "score": round(vocab_score, 2),
                     "weight": WEIGHTS["vocabulary_uniqueness"],
-                    "weighted_contribution": round(vocab_score * WEIGHTS["vocabulary_uniqueness"], 2),
+                    "weighted_contribution": round(
+                        vocab_score * WEIGHTS["vocabulary_uniqueness"], 2
+                    ),
                     "description": "Vocabulary diversity and richness",
                     "details": vocab_result["details"],
                 },
                 "structural_originality": {
                     "score": round(struct_score, 2),
                     "weight": WEIGHTS["structural_originality"],
-                    "weighted_contribution": round(struct_score * WEIGHTS["structural_originality"], 2),
+                    "weighted_contribution": round(
+                        struct_score * WEIGHTS["structural_originality"], 2
+                    ),
                     "description": "Writing structure diversity and non-formulaic patterns",
                     "details": struct_result["details"],
                 },
