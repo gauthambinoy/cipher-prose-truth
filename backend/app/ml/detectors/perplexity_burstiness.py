@@ -29,7 +29,7 @@ class PerplexityBurstinessDetector(BaseDetector):
 
     @staticmethod
     def _sentence_split(text: str) -> List[str]:
-        sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+        sentences = re.split(r"(?<=[.!?])\s+", text.strip())
         return [s.strip() for s in sentences if len(s.strip()) > 5]
 
     @staticmethod
@@ -37,7 +37,10 @@ class PerplexityBurstinessDetector(BaseDetector):
     def _sentence_perplexity(sentence: str, model, tokenizer) -> float:
         device = next(model.parameters()).device
         enc = tokenizer(
-            sentence, return_tensors="pt", truncation=True, max_length=512,
+            sentence,
+            return_tensors="pt",
+            truncation=True,
+            max_length=512,
         ).to(device)
         input_ids = enc["input_ids"]
         if input_ids.size(1) < 2:
@@ -82,7 +85,7 @@ class PerplexityBurstinessDetector(BaseDetector):
         kurt = float(sp_stats.kurtosis(values, fisher=False))
         if kurt == 0:
             return 0.0
-        return (skew ** 2 + 1) / kurt
+        return (skew**2 + 1) / kurt
 
     # ── main ─────────────────────────────────────────────────────────────
 

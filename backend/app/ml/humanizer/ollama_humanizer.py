@@ -3,9 +3,8 @@ Ollama-based humanizer -- rewrites text through a local LLM with
 style-specific prompting to produce human-sounding output.
 """
 
-import asyncio
 import logging
-from typing import Dict, Optional
+from typing import Dict
 
 import httpx
 

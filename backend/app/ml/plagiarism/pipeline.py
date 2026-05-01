@@ -4,10 +4,9 @@ source discovery, content fetching, exact matching, semantic matching,
 and per-paragraph scoring into a single cohesive result.
 """
 
-import asyncio
 import logging
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +19,7 @@ def _split_paragraphs(text: str) -> List[str]:
 
 
 def _split_sentences(text: str) -> List[str]:
-    sents = re.split(r'(?<=[.!?])\s+', text)
+    sents = re.split(r"(?<=[.!?])\s+", text)
     return [s.strip() for s in sents if s.strip() and len(s.split()) >= 3]
 
 
@@ -58,18 +57,21 @@ class PlagiarismPipeline:
     def _get_source_discovery(self):
         if self._source_discovery is None:
             from app.ml.plagiarism.source_discovery import SourceDiscovery
+
             self._source_discovery = SourceDiscovery()
         return self._source_discovery
 
     def _get_exact_matcher(self):
         if self._exact_matcher is None:
             from app.ml.plagiarism.exact_match import ExactMatcher
+
             self._exact_matcher = ExactMatcher()
         return self._exact_matcher
 
     def _get_semantic_matcher(self):
         if self._semantic_matcher is None:
             from app.ml.plagiarism.semantic_match import SemanticMatcher
+
             self._semantic_matcher = SemanticMatcher()
         return self._semantic_matcher
 
@@ -114,10 +116,12 @@ class PlagiarismPipeline:
             if not content:
                 content = src.get("snippet", "")
             if content and len(content.split()) >= 10:
-                source_texts.append({
-                    "meta": src,
-                    "content": content,
-                })
+                source_texts.append(
+                    {
+                        "meta": src,
+                        "content": content,
+                    }
+                )
 
         # ---- Step 4-5: Compare each paragraph against each source ----
         exact_matcher = self._get_exact_matcher()
@@ -206,10 +210,10 @@ class PlagiarismPipeline:
             # Overall score: weighted by paragraph length
             total_words = sum(p["word_count"] for p in paragraph_analysis)
             if total_words > 0:
-                overall_score = sum(
-                    p["plagiarism_score"] * p["word_count"]
-                    for p in paragraph_analysis
-                ) / total_words
+                overall_score = (
+                    sum(p["plagiarism_score"] * p["word_count"] for p in paragraph_analysis)
+                    / total_words
+                )
             else:
                 overall_score = sum(para_scores) / len(para_scores)
         else:
@@ -225,12 +229,14 @@ class PlagiarismPipeline:
             url = ms.get("source_url", "")
             if url and url not in seen_urls:
                 seen_urls.add(url)
-                sources_found.append({
-                    "title": ms.get("source_title", ""),
-                    "url": url,
-                    "engine": ms.get("source_engine", ""),
-                    "max_similarity": ms.get("combined_score", 0.0),
-                })
+                sources_found.append(
+                    {
+                        "title": ms.get("source_title", ""),
+                        "url": url,
+                        "engine": ms.get("source_engine", ""),
+                        "max_similarity": ms.get("combined_score", 0.0),
+                    }
+                )
 
         summary = self._build_summary(overall_score, originality, paragraph_analysis, sources_found)
 
@@ -268,9 +274,7 @@ class PlagiarismPipeline:
 
         pct = int(round(score * 100))
         if score < 0.10:
-            parts.append(
-                f"This text appears highly original ({originality}% originality)."
-            )
+            parts.append(f"This text appears highly original ({originality}% originality).")
         elif score < 0.30:
             parts.append(
                 f"Minor similarities detected ({pct}% potential overlap). "
@@ -289,13 +293,9 @@ class PlagiarismPipeline:
 
         flagged = [p for p in paragraphs if p["plagiarism_score"] >= 0.50]
         if flagged:
-            parts.append(
-                f"{len(flagged)} of {len(paragraphs)} paragraphs flagged for review."
-            )
+            parts.append(f"{len(flagged)} of {len(paragraphs)} paragraphs flagged for review.")
 
         if sources:
-            parts.append(
-                f"{len(sources)} potential source(s) identified."
-            )
+            parts.append(f"{len(sources)} potential source(s) identified.")
 
         return " ".join(parts)

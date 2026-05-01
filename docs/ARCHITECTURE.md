@@ -1,6 +1,8 @@
 # ClarityAI Architecture
 
-This document describes the internal architecture of ClarityAI — how the ML detection pipeline works, how the backend is structured, how the frontend is organised, the database schema, and how the application is deployed.
+This document describes the internal architecture of ClarityAI — how the ML detection pipeline works, how the backend is structured, how the frontend is organised, the database schema, and how the application can be deployed on free tiers.
+
+ClarityAI reports probabilistic writing signals. It is designed for portfolio demonstration, editorial triage, and NLP experimentation, not definitive authorship attribution.
 
 ---
 
@@ -87,7 +89,7 @@ The 17 signals fall into four categories:
 2. The meta-learner builds a feature vector using `DEFAULT_WEIGHTS` (per-signal weights tuned against a validation set).
 3. Interaction features are computed for three high-signal pairs: (detectgpt, binoculars), (stylometric, entropy), (perplexity, burstiness).
 4. If a trained sklearn model exists on disk it is used as a stacking estimator; otherwise the weighted average is returned directly.
-5. Classification thresholds: `>= 0.85` → AI Generated; `0.50–0.85` → Likely AI / Mixed; `< 0.50` → Human Written.
+5. Classification thresholds: `>= 0.85` → AI Generated; `0.50–0.85` → Likely AI / Mixed; `< 0.50` → Human Written. These are product thresholds, not proof thresholds; teams should recalibrate against their own validation corpus.
 
 ### Model Registry
 
@@ -286,11 +288,11 @@ User Browser
 
 #### Frontend — Vercel
 
-The Vite build output (`frontend/dist/`) is deployed to Vercel as a static site. `vercel.json` rewrites all routes to `index.html` for SPA routing. The `VITE_API_URL` environment variable points to the backend URL.
+The Vite build output (`frontend/dist/`) is deployed to Vercel as a static site. `vercel.json` rewrites all routes to `index.html` for SPA routing and proxies `/api/*` to the hosted backend. Alternatively, set `VITE_API_URL` to a backend API root such as `https://your-backend.example.com/api/v1`.
 
 #### Backend — HuggingFace Spaces or Render
 
-The `backend/Dockerfile` builds a self-contained image with Python, all pip dependencies, spaCy model, and NLTK data. The container exposes port 8000. CORS origins are configured via the `CORS_ORIGINS` environment variable to allow the Vercel frontend domain.
+The `backend/Dockerfile` builds a self-contained image with Python, all pip dependencies, spaCy model, NLTK data, and `curl` for container health checks. The container exposes port 8000. CORS origins are configured via `CORS_ORIGINS` to allow the Vercel frontend domain.
 
 #### Docker Compose (self-hosted)
 
@@ -300,8 +302,8 @@ The `backend/Dockerfile` builds a self-contained image with Python, all pip depe
 
 `.github/workflows/ci.yml` runs on every push/PR to `main`:
 
-1. **Backend**: installs dependencies, runs `ruff` lint, runs `black --check`, then `pytest tests/ --cov=app --cov-fail-under=50`
+1. **Backend**: installs dependencies, runs `ruff` lint, runs `black --check`, then `pytest tests/ --cov=app --cov-fail-under=20`
 2. **Frontend**: installs with `npm ci`, runs `vitest`, then `vite build`
 3. **Docker**: builds the backend image and smoke-tests the `/api/v1/health` endpoint
 
-`.github/workflows/deploy.yml` triggers on push to `main` and deploys frontend to Vercel and backend to Render (when secrets are configured).
+`.github/workflows/deploy.yml` triggers on push to `main` and deploys frontend to Vercel and backend to Render when the relevant secrets are configured. Without secrets, it safely skips deployment.

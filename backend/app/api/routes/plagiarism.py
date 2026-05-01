@@ -80,12 +80,13 @@ def _split_paragraphs(text: str) -> List[str]:
 def _chunk_text(text: str, chunk_size: int = 3) -> List[str]:
     """Split text into overlapping sentence chunks for search queries."""
     import re
-    sentences = re.split(r'(?<=[.!?])\s+', text)
+
+    sentences = re.split(r"(?<=[.!?])\s+", text)
     if len(sentences) <= chunk_size:
         return [text]
     chunks = []
     for i in range(0, len(sentences) - chunk_size + 1, max(1, chunk_size - 1)):
-        chunks.append(" ".join(sentences[i:i + chunk_size]))
+        chunks.append(" ".join(sentences[i : i + chunk_size]))
     return chunks
 
 
@@ -115,13 +116,13 @@ async def _semantic_similarity(text_a: str, text_b: str) -> float:
     """Compute semantic similarity between two texts using sentence embeddings."""
     try:
         from app.ml.models.model_registry import ModelRegistry
+
         registry = ModelRegistry()
         model = registry.get_sentence_transformer(settings.SENTENCE_MODEL)
         loop = asyncio.get_running_loop()
-        embeddings = await loop.run_in_executor(
-            None, model.encode, [text_a, text_b]
-        )
+        embeddings = await loop.run_in_executor(None, model.encode, [text_a, text_b])
         import numpy as np
+
         a, b = embeddings[0], embeddings[1]
         sim = float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b) + 1e-10))
         return max(0.0, min(1.0, sim))
@@ -147,12 +148,8 @@ def _exact_match_score(text: str, source_text: str) -> float:
     source_words = source_lower.split()
     if len(text_words) < n or len(source_words) < n:
         return 0.0
-    text_ngrams = set(
-        tuple(text_words[i:i + n]) for i in range(len(text_words) - n + 1)
-    )
-    source_ngrams = set(
-        tuple(source_words[i:i + n]) for i in range(len(source_words) - n + 1)
-    )
+    text_ngrams = set(tuple(text_words[i : i + n]) for i in range(len(text_words) - n + 1))
+    source_ngrams = set(tuple(source_words[i : i + n]) for i in range(len(source_words) - n + 1))
     overlap = len(text_ngrams & source_ngrams)
     total = max(len(text_ngrams), 1)
     return min(1.0, overlap / total)
@@ -198,13 +195,15 @@ async def _analyze_paragraph(
             method = "exact" if exact_score >= sem_score else "semantic"
 
             if best_score >= settings.PLAG_SIMILARITY_THRESHOLD:
-                sources.append(SourceMatch(
-                    url=url or None,
-                    title=title or None,
-                    matched_text=source_text[:500],
-                    similarity_score=round(best_score, 4),
-                    method=method,
-                ))
+                sources.append(
+                    SourceMatch(
+                        url=url or None,
+                        title=title or None,
+                        matched_text=source_text[:500],
+                        similarity_score=round(best_score, 4),
+                        method=method,
+                    )
+                )
 
     plag_score = max((s.similarity_score for s in sources), default=0.0)
 
@@ -241,10 +240,7 @@ async def check_plagiarism(
         paragraphs = [request.text]
 
     # Analyze all paragraphs concurrently
-    para_tasks = [
-        _analyze_paragraph(i, p, request.options)
-        for i, p in enumerate(paragraphs)
-    ]
+    para_tasks = [_analyze_paragraph(i, p, request.options) for i, p in enumerate(paragraphs)]
     paragraph_results: List[ParagraphAnalysis] = await asyncio.gather(*para_tasks)
 
     # Deduplicate sources across paragraphs
@@ -259,10 +255,7 @@ async def check_plagiarism(
 
     # Weighted overall score (by paragraph char length)
     total_chars = sum(len(p.text) for p in paragraph_results) or 1
-    overall_score = sum(
-        p.plagiarism_score * len(p.text) / total_chars
-        for p in paragraph_results
-    )
+    overall_score = sum(p.plagiarism_score * len(p.text) / total_chars for p in paragraph_results)
     overall_score = round(min(1.0, overall_score), 4)
     originality = round((1.0 - overall_score) * 100, 2)
 
@@ -292,10 +285,12 @@ async def check_plagiarism(
             matched_text=src.matched_text,
             similarity_score=src.similarity_score,
             method=src.method,
-            details_json=json.dumps({
-                "paragraph_count": len(paragraph_results),
-                "overall_plagiarism_score": overall_score,
-            }),
+            details_json=json.dumps(
+                {
+                    "paragraph_count": len(paragraph_results),
+                    "overall_plagiarism_score": overall_score,
+                }
+            ),
         )
         db.add(pr)
 
@@ -327,10 +322,7 @@ async def get_plagiarism_result(
         raise HTTPException(status_code=404, detail="Plagiarism result not found")
 
     # Load associated plagiarism match rows
-    plag_stmt = (
-        select(PlagiarismResult)
-        .where(PlagiarismResult.analysis_id == result_id)
-    )
+    plag_stmt = select(PlagiarismResult).where(PlagiarismResult.analysis_id == result_id)
     plag_result = await db.execute(plag_stmt)
     plag_rows = plag_result.scalars().all()
 
@@ -353,25 +345,26 @@ async def get_plagiarism_result(
     paragraph_analysis = []
     for i, p in enumerate(paragraphs):
         para_sources = [
-            src for src in sources
-            if src.matched_text and (
+            src
+            for src in sources
+            if src.matched_text
+            and (
                 src.matched_text[:100].lower() in p.lower()
                 or _exact_match_score(p, src.matched_text) > 0.3
             )
         ]
         plag_score = max((s.similarity_score for s in para_sources), default=0.0)
-        paragraph_analysis.append(ParagraphAnalysis(
-            paragraph_index=i,
-            text=p[:1000],
-            plagiarism_score=round(plag_score, 4),
-            sources=para_sources,
-        ))
+        paragraph_analysis.append(
+            ParagraphAnalysis(
+                paragraph_index=i,
+                text=p[:1000],
+                plagiarism_score=round(plag_score, 4),
+                sources=para_sources,
+            )
+        )
 
     total_chars = sum(len(p.text) for p in paragraph_analysis) or 1
-    overall_score = sum(
-        p.plagiarism_score * len(p.text) / total_chars
-        for p in paragraph_analysis
-    )
+    overall_score = sum(p.plagiarism_score * len(p.text) / total_chars for p in paragraph_analysis)
     overall_score = round(min(1.0, overall_score), 4)
 
     return PlagiarismResponse(

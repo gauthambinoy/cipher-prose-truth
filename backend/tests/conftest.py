@@ -50,6 +50,7 @@ SHORT_TEXT = "Hello world."
 # FastAPI test client fixture
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 async def client():
     """Async test client for the ClarityAI FastAPI app.
@@ -57,12 +58,15 @@ async def client():
     Uses an in-memory SQLite database so tests don't touch the real DB.
     """
     import os
+
     # Point to an in-memory DB for tests
     os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
 
     from app.main import create_app
+    from app.db.database import init_db
 
     app = create_app()
+    await init_db()
 
     async with AsyncClient(
         transport=ASGITransport(app=app),

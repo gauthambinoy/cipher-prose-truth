@@ -121,6 +121,7 @@ def _get_detectors():
                 POSPatternDetector,
                 WatermarkDetector,
             )
+
             _detectors_cache["all"] = [
                 PerplexityDetector(),
                 ZeroShotDetector(),
@@ -153,6 +154,7 @@ def _get_ensemble():
     """Lazy-load ensemble meta-learner."""
     try:
         from app.ml.ensemble import MetaLearner  # type: ignore[attr-defined]
+
         return MetaLearner()
     except ImportError:
         logger.warning("Ensemble meta-learner not yet implemented — using average")
@@ -163,6 +165,7 @@ def _get_sentence_analyzer():
     """Lazy-load sentence-level analyzer."""
     try:
         from app.ml.detectors import SentenceLevelAnalyzer  # type: ignore[attr-defined]
+
         return SentenceLevelAnalyzer()
     except ImportError:
         logger.warning("Sentence-level analyzer not yet implemented")
@@ -257,9 +260,7 @@ async def _run_full_detection(
 
     # Run all detectors in parallel
     if detector_list:
-        signal_results = await asyncio.gather(
-            *[_run_detector(d, text) for d in detector_list]
-        )
+        signal_results = await asyncio.gather(*[_run_detector(d, text) for d in detector_list])
     else:
         # Stub results when detectors are not yet implemented
         signal_results = [
@@ -285,9 +286,9 @@ async def _run_full_detection(
                         "sentence": s["sentence"],
                         "ai_probability": s["ai_probability"],
                         "highlight": (
-                            "high" if s["ai_probability"] >= 0.75
-                            else "medium" if s["ai_probability"] >= 0.4
-                            else "low"
+                            "high"
+                            if s["ai_probability"] >= 0.75
+                            else "medium" if s["ai_probability"] >= 0.4 else "low"
                         ),
                     }
                     for s in raw
@@ -351,9 +352,15 @@ async def detect(
         word_count=result["word_count"],
         overall_ai_score=result["overall_score"],
         classification=result["classification"],
-        confidence=0.95 if result["confidence"] == "high" else 0.7 if result["confidence"] == "medium" else 0.4,
+        confidence=(
+            0.95
+            if result["confidence"] == "high"
+            else 0.7 if result["confidence"] == "medium" else 0.4
+        ),
         signals_json=json.dumps(result["signals"]),
-        sentence_scores_json=json.dumps(result["sentence_analysis"]) if result["sentence_analysis"] else None,
+        sentence_scores_json=(
+            json.dumps(result["sentence_analysis"]) if result["sentence_analysis"] else None
+        ),
         gltr_data_json=json.dumps(result["gltr_tokens"]) if result["gltr_tokens"] else None,
         attribution_model=result["attribution"]["likely_model"] if result["attribution"] else None,
         processing_time_ms=result["processing_time_ms"],
@@ -372,13 +379,19 @@ async def detect(
                 signal=s.get("signal", "unknown"),
                 ai_probability=s.get("ai_probability", 0.5),
                 confidence=s.get("confidence", "low"),
-                details={k: v for k, v in s.items() if k not in ("signal", "ai_probability", "confidence")},
+                details={
+                    k: v
+                    for k, v in s.items()
+                    if k not in ("signal", "ai_probability", "confidence")
+                },
             )
             for s in result["signals"]
         ],
-        sentence_analysis=[
-            SentenceScore(**s) for s in result["sentence_analysis"]
-        ] if result["sentence_analysis"] else None,
+        sentence_analysis=(
+            [SentenceScore(**s) for s in result["sentence_analysis"]]
+            if result["sentence_analysis"]
+            else None
+        ),
         gltr_tokens=result["gltr_tokens"],
         attribution=result["attribution"],
         word_count=result["word_count"],
@@ -407,7 +420,11 @@ async def detect_fast(
         word_count=result["word_count"],
         overall_ai_score=result["overall_score"],
         classification=result["classification"],
-        confidence=0.95 if result["confidence"] == "high" else 0.7 if result["confidence"] == "medium" else 0.4,
+        confidence=(
+            0.95
+            if result["confidence"] == "high"
+            else 0.7 if result["confidence"] == "medium" else 0.4
+        ),
         signals_json=json.dumps(result["signals"]),
         gltr_data_json=json.dumps(result["gltr_tokens"]) if result["gltr_tokens"] else None,
         processing_time_ms=result["processing_time_ms"],
@@ -426,7 +443,11 @@ async def detect_fast(
                 signal=s.get("signal", "unknown"),
                 ai_probability=s.get("ai_probability", 0.5),
                 confidence=s.get("confidence", "low"),
-                details={k: v for k, v in s.items() if k not in ("signal", "ai_probability", "confidence")},
+                details={
+                    k: v
+                    for k, v in s.items()
+                    if k not in ("signal", "ai_probability", "confidence")
+                },
             )
             for s in result["signals"]
         ],
@@ -453,14 +474,22 @@ async def get_analysis(
         raise HTTPException(status_code=404, detail="Analysis not found")
 
     signals_raw: List[dict] = json.loads(analysis.signals_json) if analysis.signals_json else []
-    sentence_scores = json.loads(analysis.sentence_scores_json) if analysis.sentence_scores_json else None
+    sentence_scores = (
+        json.loads(analysis.sentence_scores_json) if analysis.sentence_scores_json else None
+    )
     gltr_tokens = json.loads(analysis.gltr_data_json) if analysis.gltr_data_json else None
 
     attribution = None
     if analysis.attribution_model:
-        attribution = {"likely_model": analysis.attribution_model, "model_confidence": None, "all_model_scores": []}
+        attribution = {
+            "likely_model": analysis.attribution_model,
+            "model_confidence": None,
+            "all_model_scores": [],
+        }
 
-    confidence_label = "high" if analysis.confidence >= 0.85 else "medium" if analysis.confidence >= 0.5 else "low"
+    confidence_label = (
+        "high" if analysis.confidence >= 0.85 else "medium" if analysis.confidence >= 0.5 else "low"
+    )
 
     return DetectionResponse(
         analysis_id=analysis.id,
@@ -472,13 +501,17 @@ async def get_analysis(
                 signal=s.get("signal", "unknown"),
                 ai_probability=s.get("ai_probability", 0.5),
                 confidence=s.get("confidence", "low"),
-                details={k: v for k, v in s.items() if k not in ("signal", "ai_probability", "confidence")},
+                details={
+                    k: v
+                    for k, v in s.items()
+                    if k not in ("signal", "ai_probability", "confidence")
+                },
             )
             for s in signals_raw
         ],
-        sentence_analysis=[
-            SentenceScore(**s) for s in sentence_scores
-        ] if sentence_scores else None,
+        sentence_analysis=(
+            [SentenceScore(**s) for s in sentence_scores] if sentence_scores else None
+        ),
         gltr_tokens=gltr_tokens,
         attribution=attribution,
         word_count=analysis.word_count,
@@ -494,10 +527,14 @@ async def get_analysis(
 
 async def _process_batch(batch_id: str, texts: List[str], mode: str):
     """Background task that processes each text and updates the batch job row."""
-    options = DetectionOptions() if mode == "deep" else DetectionOptions(
-        include_sentence_scores=False,
-        include_watermark_check=False,
-        include_attribution=False,
+    options = (
+        DetectionOptions()
+        if mode == "deep"
+        else DetectionOptions(
+            include_sentence_scores=False,
+            include_watermark_check=False,
+            include_attribution=False,
+        )
     )
     results: List[Dict[str, Any]] = []
     processed = 0
@@ -521,9 +558,15 @@ async def _process_batch(batch_id: str, texts: List[str], mode: str):
                     word_count=det["word_count"],
                     overall_ai_score=det["overall_score"],
                     classification=det["classification"],
-                    confidence=0.95 if det["confidence"] == "high" else 0.7 if det["confidence"] == "medium" else 0.4,
+                    confidence=(
+                        0.95
+                        if det["confidence"] == "high"
+                        else 0.7 if det["confidence"] == "medium" else 0.4
+                    ),
                     signals_json=json.dumps(det["signals"]),
-                    sentence_scores_json=json.dumps(det["sentence_analysis"]) if det["sentence_analysis"] else None,
+                    sentence_scores_json=(
+                        json.dumps(det["sentence_analysis"]) if det["sentence_analysis"] else None
+                    ),
                     gltr_data_json=json.dumps(det["gltr_tokens"]) if det["gltr_tokens"] else None,
                     processing_time_ms=det["processing_time_ms"],
                     model_version=settings.APP_VERSION,
@@ -531,13 +574,15 @@ async def _process_batch(batch_id: str, texts: List[str], mode: str):
                 db.add(analysis)
                 await db.flush()
 
-                results.append({
-                    "analysis_id": analysis.id,
-                    "overall_score": det["overall_score"],
-                    "classification": det["classification"],
-                    "word_count": det["word_count"],
-                    "processing_time_ms": det["processing_time_ms"],
-                })
+                results.append(
+                    {
+                        "analysis_id": analysis.id,
+                        "overall_score": det["overall_score"],
+                        "classification": det["classification"],
+                        "word_count": det["word_count"],
+                        "processing_time_ms": det["processing_time_ms"],
+                    }
+                )
                 processed += 1
             except Exception as exc:
                 logger.error("Batch item failed: %s", exc)

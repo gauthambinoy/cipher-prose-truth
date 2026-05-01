@@ -25,20 +25,44 @@ from app.ml.models.model_registry import ModelRegistry
 logger = logging.getLogger(__name__)
 
 _CLF_PATH = os.path.join(
-    os.path.dirname(__file__), "..", "weights", "stylometric_clf.pkl",
+    os.path.dirname(__file__),
+    "..",
+    "weights",
+    "stylometric_clf.pkl",
 )
 
 AI_DISCOURSE_MARKERS = [
-    "furthermore", "moreover", "additionally", "consequently",
-    "nevertheless", "in conclusion", "it is important to note",
-    "it is worth noting", "in summary", "overall",
-    "specifically", "notably", "significantly", "essentially",
+    "furthermore",
+    "moreover",
+    "additionally",
+    "consequently",
+    "nevertheless",
+    "in conclusion",
+    "it is important to note",
+    "it is worth noting",
+    "in summary",
+    "overall",
+    "specifically",
+    "notably",
+    "significantly",
+    "essentially",
 ]
 
 HUMAN_DISCOURSE_MARKERS = [
-    "honestly", "actually", "basically", "like", "you know",
-    "i mean", "well", "anyway", "so yeah", "kind of",
-    "sort of", "i think", "i guess", "pretty much",
+    "honestly",
+    "actually",
+    "basically",
+    "like",
+    "you know",
+    "i mean",
+    "well",
+    "anyway",
+    "so yeah",
+    "kind of",
+    "sort of",
+    "i think",
+    "i guess",
+    "pretty much",
 ]
 
 
@@ -71,7 +95,7 @@ class StylometricDetector(BaseDetector):
             return StylometricDetector._ttr(tokens)
         ttrs = []
         for i in range(len(tokens) - window + 1):
-            w = tokens[i: i + window]
+            w = tokens[i : i + window]
             ttrs.append(len(set(w)) / window)
         return float(np.mean(ttrs))
 
@@ -109,14 +133,17 @@ class StylometricDetector(BaseDetector):
     def _sentence_features(sent_lengths: List[int]) -> Dict[str, float]:
         if not sent_lengths:
             return {
-                "sent_mean": 0.0, "sent_std": 0.0,
-                "sent_bimodality": 0.0, "sent_range": 0.0,
+                "sent_mean": 0.0,
+                "sent_std": 0.0,
+                "sent_bimodality": 0.0,
+                "sent_range": 0.0,
             }
         arr = np.array(sent_lengths, dtype=float)
         from scipy import stats as sp_stats
+
         skew = float(sp_stats.skew(arr)) if len(arr) >= 3 else 0.0
         kurt = float(sp_stats.kurtosis(arr, fisher=False)) if len(arr) >= 4 else 3.0
-        bimod = (skew ** 2 + 1) / kurt if kurt != 0 else 0.0
+        bimod = (skew**2 + 1) / kurt if kurt != 0 else 0.0
         return {
             "sent_mean": float(arr.mean()),
             "sent_std": float(arr.std()),
@@ -131,28 +158,26 @@ class StylometricDetector(BaseDetector):
         """Average maximum dependency depth per sentence."""
         depths = []
         for sent in doc.sents:
+
             def _depth(token, d=0):
                 if not list(token.children):
                     return d
                 return max(_depth(c, d + 1) for c in token.children)
+
             depths.append(_depth(sent.root))
         return float(np.mean(depths)) if depths else 0.0
 
     @staticmethod
     def _subordinate_clause_ratio(doc) -> float:
         total = sum(1 for _ in doc.sents)
-        sub = sum(
-            1 for t in doc
-            if t.dep_ in ("advcl", "relcl", "acl", "ccomp", "xcomp")
-        )
+        sub = sum(1 for t in doc if t.dep_ in ("advcl", "relcl", "acl", "ccomp", "xcomp"))
         return sub / max(total, 1)
 
     @staticmethod
     def _passive_voice_ratio(doc) -> float:
         total_verbs = sum(1 for t in doc if t.pos_ == "VERB")
         passive = sum(
-            1 for t in doc
-            if t.dep_ in ("nsubjpass", "auxpass") or t.dep_ == "nsubj:pass"
+            1 for t in doc if t.dep_ in ("nsubjpass", "auxpass") or t.dep_ == "nsubj:pass"
         )
         return passive / max(total_verbs, 1)
 
@@ -162,7 +187,7 @@ class StylometricDetector(BaseDetector):
     def _punctuation_features(text: str, num_tokens: int) -> Dict[str, float]:
         n = max(num_tokens, 1)
         return {
-            "punct_density": len(re.findall(r'[^\w\s]', text)) / n,
+            "punct_density": len(re.findall(r"[^\w\s]", text)) / n,
             "em_dash_count": text.count("\u2014") + text.count("--"),
             "ellipsis_count": text.count("...") + text.count("\u2026"),
         }
@@ -241,12 +266,16 @@ class StylometricDetector(BaseDetector):
         feats.append(pos_entropy)
 
         # additional richness (7 more to reach 27)
-        feats.append(float(np.mean([len(t.text) for t in doc if t.is_alpha])) if tokens else 0.0)  # avg word len
+        feats.append(
+            float(np.mean([len(t.text) for t in doc if t.is_alpha])) if tokens else 0.0
+        )  # avg word len
         feats.append(float(len(set(tokens))) if tokens else 0.0)  # unique words
         feats.append(sum(1 for t in doc if t.is_stop) / max(len(doc), 1))  # stopword ratio
         feats.append(len(sent_lengths))  # num sentences
         feats.append(float(np.median(sent_lengths)) if sent_lengths else 0.0)  # median sent len
-        feats.append(float(np.percentile(sent_lengths, 90)) if len(sent_lengths) >= 2 else 0.0)  # p90 sent len
+        feats.append(
+            float(np.percentile(sent_lengths, 90)) if len(sent_lengths) >= 2 else 0.0
+        )  # p90 sent len
         feats.append(sum(1 for t in doc if t.pos_ == "ADJ") / max(len(doc), 1))  # adj ratio
 
         return np.array(feats, dtype=np.float64)  # 27 features
@@ -279,9 +308,7 @@ class StylometricDetector(BaseDetector):
 
         if self._classifier is not None:
             try:
-                ai_prob = float(
-                    self._classifier.predict_proba(features.reshape(1, -1))[0][1]
-                )
+                ai_prob = float(self._classifier.predict_proba(features.reshape(1, -1))[0][1])
                 method = "gradient_boosting"
             except Exception as exc:
                 logger.warning("Stylometric classifier failed: %s", exc)
@@ -293,9 +320,7 @@ class StylometricDetector(BaseDetector):
 
         ai_prob = self._clamp(ai_prob)
         confidence = (
-            "high" if abs(ai_prob - 0.5) > 0.3
-            else "medium" if abs(ai_prob - 0.5) > 0.15
-            else "low"
+            "high" if abs(ai_prob - 0.5) > 0.3 else "medium" if abs(ai_prob - 0.5) > 0.15 else "low"
         )
 
         return {
@@ -306,15 +331,33 @@ class StylometricDetector(BaseDetector):
                 "method": method,
                 "num_features": len(features),
                 "feature_names": [
-                    "ttr", "mattr", "hapax_ratio", "yules_k", "simpsons_d",
-                    "sent_mean", "sent_std", "sent_bimodality", "sent_range",
-                    "dep_depth", "subordinate_clause_ratio", "passive_voice_ratio",
-                    "punct_density", "em_dash_count", "ellipsis_count",
-                    "ai_marker_density", "human_marker_density",
-                    "func_content_ratio", "contraction_density",
+                    "ttr",
+                    "mattr",
+                    "hapax_ratio",
+                    "yules_k",
+                    "simpsons_d",
+                    "sent_mean",
+                    "sent_std",
+                    "sent_bimodality",
+                    "sent_range",
+                    "dep_depth",
+                    "subordinate_clause_ratio",
+                    "passive_voice_ratio",
+                    "punct_density",
+                    "em_dash_count",
+                    "ellipsis_count",
+                    "ai_marker_density",
+                    "human_marker_density",
+                    "func_content_ratio",
+                    "contraction_density",
                     "pos_entropy",
-                    "avg_word_len", "unique_words", "stopword_ratio",
-                    "num_sentences", "median_sent_len", "p90_sent_len", "adj_ratio",
+                    "avg_word_len",
+                    "unique_words",
+                    "stopword_ratio",
+                    "num_sentences",
+                    "median_sent_len",
+                    "p90_sent_len",
+                    "adj_ratio",
                 ],
                 "feature_values": [round(float(f), 4) for f in features],
             },

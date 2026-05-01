@@ -6,7 +6,7 @@ or semantically similar passages even when lexical overlap is low.
 import logging
 import re
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List
 
 import numpy as np
 
@@ -31,6 +31,7 @@ def _load_model():
     """Lazy-load the sentence-transformer model."""
     try:
         from sentence_transformers import SentenceTransformer
+
         model = SentenceTransformer("all-MiniLM-L6-v2")
         logger.info("Loaded all-MiniLM-L6-v2 for semantic matching.")
         return model
@@ -41,7 +42,7 @@ def _load_model():
 
 def _split_sentences(text: str) -> List[str]:
     """Basic sentence splitter."""
-    sents = re.split(r'(?<=[.!?])\s+', text)
+    sents = re.split(r"(?<=[.!?])\s+", text)
     return [s.strip() for s in sents if s.strip() and len(s.split()) >= 3]
 
 
@@ -137,16 +138,18 @@ class SemanticMatcher:
             lex_overlap = _lexical_overlap(sent_a, sentences_b[best_j])
             match_type = _classify_match(best_sim, lex_overlap)
 
-            matches.append({
-                "source_sentence": sent_a,
-                "matched_sentence": sentences_b[best_j],
-                "semantic_similarity": round(best_sim, 4),
-                "lexical_overlap": round(lex_overlap, 4),
-                "match_type": match_type.value,
-                "is_paraphrase": (
-                    best_sim >= SEMANTIC_SIM_HIGH and lex_overlap < LEXICAL_OVERLAP_LOW
-                ),
-            })
+            matches.append(
+                {
+                    "source_sentence": sent_a,
+                    "matched_sentence": sentences_b[best_j],
+                    "semantic_similarity": round(best_sim, 4),
+                    "lexical_overlap": round(lex_overlap, 4),
+                    "match_type": match_type.value,
+                    "is_paraphrase": (
+                        best_sim >= SEMANTIC_SIM_HIGH and lex_overlap < LEXICAL_OVERLAP_LOW
+                    ),
+                }
+            )
 
         return matches
 
@@ -165,17 +168,18 @@ class SemanticMatcher:
                     best_j = j
 
             match_type = (
-                MatchType.EXACT_COPY if best_lex >= EXACT_COPY_LEXICAL
-                else MatchType.NO_MATCH
+                MatchType.EXACT_COPY if best_lex >= EXACT_COPY_LEXICAL else MatchType.NO_MATCH
             )
-            matches.append({
-                "source_sentence": sent_a,
-                "matched_sentence": sentences_b[best_j],
-                "semantic_similarity": best_lex,  # approximate
-                "lexical_overlap": round(best_lex, 4),
-                "match_type": match_type.value,
-                "is_paraphrase": False,
-            })
+            matches.append(
+                {
+                    "source_sentence": sent_a,
+                    "matched_sentence": sentences_b[best_j],
+                    "semantic_similarity": best_lex,  # approximate
+                    "lexical_overlap": round(best_lex, 4),
+                    "match_type": match_type.value,
+                    "is_paraphrase": False,
+                }
+            )
         return matches
 
     # ------------------------------------------------------------------
@@ -209,10 +213,7 @@ class SemanticMatcher:
         sem_count = sum(1 for m in matches if m["match_type"] == MatchType.SEMANTIC_MATCH.value)
         flagged = exact_count + para_count + sem_count
 
-        avg_sim = (
-            sum(m["semantic_similarity"] for m in matches) / len(matches)
-            if matches else 0.0
-        )
+        avg_sim = sum(m["semantic_similarity"] for m in matches) / len(matches) if matches else 0.0
 
         return {
             "overall_semantic_similarity": round(avg_sim, 4),

@@ -69,9 +69,7 @@ class POSPatternsDetector(BaseDetector):
         ai_prob = self._clamp(
             0.25 * nv_score + 0.25 * inf_score + 0.25 * ent_score + 0.25 * div_score
         )
-        confidence = self._compute_confidence(
-            [nv_score, inf_score, ent_score, div_score]
-        )
+        confidence = self._compute_confidence([nv_score, inf_score, ent_score, div_score])
 
         return {
             "signal": signal,

@@ -133,7 +133,7 @@ class WritingCoach:
 
     @staticmethod
     def _sentence_split(text: str) -> List[str]:
-        sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+        sentences = re.split(r"(?<=[.!?])\s+", text.strip())
         return [s.strip() for s in sentences if len(s.strip()) > 3]
 
     @staticmethod
@@ -173,11 +173,13 @@ class WritingCoach:
                     "position": pos,
                 }
                 suggestions.append(suggestion)
-                quick_fixes.append({
-                    "original": pattern,
-                    "fix": replacement,
-                    "position": pos,
-                })
+                quick_fixes.append(
+                    {
+                        "original": pattern,
+                        "fix": replacement,
+                        "position": pos,
+                    }
+                )
                 penalty_points += 2.0 if impact == "high" else 1.0
 
         # ── Check 2: Contraction suggestions ─────────────────────────────
@@ -185,7 +187,7 @@ class WritingCoach:
             pos = self._find_position(text, expanded)
             if pos is not None:
                 # Make sure it's not already contracted in the actual text
-                actual_segment = text[pos:pos + len(expanded)]
+                actual_segment = text[pos : pos + len(expanded)]
                 if actual_segment.lower() == expanded.lower():
                     suggestion = {
                         "category": "contraction",
@@ -196,129 +198,160 @@ class WritingCoach:
                         "position": pos,
                     }
                     suggestions.append(suggestion)
-                    quick_fixes.append({
-                        "original": expanded,
-                        "fix": contracted,
-                        "position": pos,
-                    })
+                    quick_fixes.append(
+                        {
+                            "original": expanded,
+                            "fix": contracted,
+                            "position": pos,
+                        }
+                    )
                     penalty_points += 0.5
 
         # ── Check 3: Sentence length uniformity ──────────────────────────
         if len(sentences) >= 4:
             sent_lengths = [len(s.split()) for s in sentences]
             mean_len = sum(sent_lengths) / len(sent_lengths)
-            std_len = (sum((l - mean_len) ** 2 for l in sent_lengths) / len(sent_lengths)) ** 0.5
+            std_len = (
+                sum((length - mean_len) ** 2 for length in sent_lengths) / len(sent_lengths)
+            ) ** 0.5
             cov = std_len / mean_len if mean_len > 0 else 0
 
             if cov < 0.3:
                 # Find a long sentence to suggest breaking up
-                for i, (s, l) in enumerate(zip(sentences, sent_lengths)):
-                    if l > mean_len * 1.2:
+                for i, (s, length) in enumerate(zip(sentences, sent_lengths)):
+                    if length > mean_len * 1.2:
                         pos = self._find_position(text, s[:40])
-                        suggestions.append({
-                            "category": "sentence_structure",
-                            "message": "This paragraph has too uniform sentence lengths. Try varying: break this long sentence or combine short ones.",
-                            "original": s[:80] + ("..." if len(s) > 80 else ""),
-                            "fix": "Try splitting into shorter sentences or combining nearby short sentences",
-                            "impact": "high",
-                            "position": pos,
-                        })
+                        suggestions.append(
+                            {
+                                "category": "sentence_structure",
+                                "message": "This paragraph has too uniform sentence lengths. Try varying: break this long sentence or combine short ones.",
+                                "original": s[:80] + ("..." if len(s) > 80 else ""),
+                                "fix": "Try splitting into shorter sentences or combining nearby short sentences",
+                                "impact": "high",
+                                "position": pos,
+                            }
+                        )
                         penalty_points += 3.0
                         break
                 else:
-                    suggestions.append({
-                        "category": "sentence_structure",
-                        "message": "Sentences are very uniform in length. Try varying sentence length for natural flow.",
-                        "original": None,
-                        "fix": "Mix short punchy sentences with longer descriptive ones",
-                        "impact": "high",
-                        "position": 0,
-                    })
+                    suggestions.append(
+                        {
+                            "category": "sentence_structure",
+                            "message": "Sentences are very uniform in length. Try varying sentence length for natural flow.",
+                            "original": None,
+                            "fix": "Mix short punchy sentences with longer descriptive ones",
+                            "impact": "high",
+                            "position": 0,
+                        }
+                    )
                     penalty_points += 3.0
 
         # ── Check 4: Transition word density ─────────────────────────────
         transition_words = [
-            "furthermore", "moreover", "additionally", "consequently",
-            "nevertheless", "nonetheless", "subsequently", "however",
-            "therefore", "thus", "hence", "accordingly", "meanwhile",
-            "similarly", "likewise", "conversely", "alternatively",
+            "furthermore",
+            "moreover",
+            "additionally",
+            "consequently",
+            "nevertheless",
+            "nonetheless",
+            "subsequently",
+            "however",
+            "therefore",
+            "thus",
+            "hence",
+            "accordingly",
+            "meanwhile",
+            "similarly",
+            "likewise",
+            "conversely",
+            "alternatively",
         ]
         transition_count = sum(1 for w in words if w in transition_words)
         transition_density = transition_count / (total_words / 100)
         if transition_density > 2.0:
-            suggestions.append({
-                "category": "transition",
-                "message": f"Too many transition words ({transition_count} found). Remove some for natural flow.",
-                "original": None,
-                "fix": "Remove unnecessary transitions. Let ideas flow naturally without signposting every connection.",
-                "impact": "high",
-                "position": 0,
-            })
+            suggestions.append(
+                {
+                    "category": "transition",
+                    "message": f"Too many transition words ({transition_count} found). Remove some for natural flow.",
+                    "original": None,
+                    "fix": "Remove unnecessary transitions. Let ideas flow naturally without signposting every connection.",
+                    "impact": "high",
+                    "position": 0,
+                }
+            )
             penalty_points += 3.0
 
         # ── Check 5: AI signature phrases ────────────────────────────────
         for phrase in _AI_SIGNATURE_PHRASES:
             pos = self._find_position(text, phrase)
             if pos is not None:
-                suggestions.append({
-                    "category": "ai_signature",
-                    "message": f"'{phrase}' is a common AI-generated phrase. Rephrase or remove it.",
-                    "original": phrase,
-                    "fix": "Rephrase in your own words or remove entirely",
-                    "impact": "high",
-                    "position": pos,
-                })
+                suggestions.append(
+                    {
+                        "category": "ai_signature",
+                        "message": f"'{phrase}' is a common AI-generated phrase. Rephrase or remove it.",
+                        "original": phrase,
+                        "fix": "Rephrase in your own words or remove entirely",
+                        "impact": "high",
+                        "position": pos,
+                    }
+                )
                 penalty_points += 2.5
 
         # ── Check 6: Personal voice ──────────────────────────────────────
         first_person = sum(1 for w in words if w in {"i", "me", "my", "mine", "myself"})
         if first_person == 0 and total_words > 50:
-            suggestions.append({
-                "category": "personal_voice",
-                "message": "Add a personal anecdote or opinion to make this sound more authentic.",
-                "original": None,
-                "fix": "Include first-person perspective: share an experience, opinion, or reaction",
-                "impact": "medium",
-                "position": 0,
-            })
+            suggestions.append(
+                {
+                    "category": "personal_voice",
+                    "message": "Add a personal anecdote or opinion to make this sound more authentic.",
+                    "original": None,
+                    "fix": "Include first-person perspective: share an experience, opinion, or reaction",
+                    "impact": "medium",
+                    "position": 0,
+                }
+            )
             penalty_points += 2.0
 
         # ── Check 7: Paragraph starting words ────────────────────────────
-        paragraphs = [p.strip() for p in re.split(r'\n\s*\n', text) if p.strip()]
+        paragraphs = [p.strip() for p in re.split(r"\n\s*\n", text) if p.strip()]
         if len(paragraphs) >= 3:
             starts = []
             for p in paragraphs:
-                first_word = p.split()[0].lower().rstrip('.,;:') if p.split() else ""
+                first_word = p.split()[0].lower().rstrip(".,;:") if p.split() else ""
                 starts.append(first_word)
             if len(set(starts)) < len(starts) * 0.6:
-                suggestions.append({
-                    "category": "paragraph_structure",
-                    "message": "Paragraphs start with repetitive words. Vary your opening words.",
-                    "original": None,
-                    "fix": "Start paragraphs differently -- use questions, quotes, or jump straight to the point",
-                    "impact": "medium",
-                    "position": 0,
-                })
+                suggestions.append(
+                    {
+                        "category": "paragraph_structure",
+                        "message": "Paragraphs start with repetitive words. Vary your opening words.",
+                        "original": None,
+                        "fix": "Start paragraphs differently -- use questions, quotes, or jump straight to the point",
+                        "impact": "medium",
+                        "position": 0,
+                    }
+                )
                 penalty_points += 1.5
 
         # ── Check 8: Passive voice ───────────────────────────────────────
         passive_patterns = [
-            r'\b(?:is|are|was|were|been|being)\s+\w+ed\b',
-            r'\b(?:is|are|was|were|been|being)\s+\w+en\b',
+            r"\b(?:is|are|was|were|been|being)\s+\w+ed\b",
+            r"\b(?:is|are|was|were|been|being)\s+\w+en\b",
         ]
         passive_count = 0
         for pattern in passive_patterns:
             passive_count += len(re.findall(pattern, text_lower))
         passive_ratio = passive_count / max(len(sentences), 1)
         if passive_ratio > 0.3:
-            suggestions.append({
-                "category": "voice",
-                "message": f"High passive voice usage ({passive_count} instances). Use active voice more.",
-                "original": None,
-                "fix": "Rewrite passive constructions: 'was done by X' -> 'X did'",
-                "impact": "medium",
-                "position": 0,
-            })
+            suggestions.append(
+                {
+                    "category": "voice",
+                    "message": f"High passive voice usage ({passive_count} instances). Use active voice more.",
+                    "original": None,
+                    "fix": "Rewrite passive constructions: 'was done by X' -> 'X did'",
+                    "impact": "medium",
+                    "position": 0,
+                }
+            )
             penalty_points += 2.0
 
         # ── Compute human score ──────────────────────────────────────────

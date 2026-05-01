@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 # ── Lifespan ─────────────────────────────────────────────────────────────
 
+
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     """Startup / shutdown lifecycle hook."""
@@ -55,13 +56,18 @@ def _download_nltk_data() -> None:
     packages = ["punkt", "punkt_tab", "averaged_perceptron_tagger", "stopwords"]
     for pkg in packages:
         try:
-            nltk.data.find(f"tokenizers/{pkg}" if "punkt" in pkg else f"corpora/{pkg}" if pkg == "stopwords" else f"taggers/{pkg}")
+            nltk.data.find(
+                f"tokenizers/{pkg}"
+                if "punkt" in pkg
+                else f"corpora/{pkg}" if pkg == "stopwords" else f"taggers/{pkg}"
+            )
         except LookupError:
             logger.info("Downloading NLTK resource: %s", pkg)
             nltk.download(pkg, quiet=True)
 
 
 # ── Application factory ──────────────────────────────────────────────────
+
 
 def create_app() -> FastAPI:
     """Build and return the configured FastAPI application."""
@@ -87,6 +93,7 @@ def create_app() -> FastAPI:
 
     # -- Rate Limiting ----------------------------------------------------
     from app.core.rate_limiter import add_rate_limiting
+
     add_rate_limiting(app)
 
     # -- Routers ----------------------------------------------------------
@@ -97,7 +104,17 @@ def create_app() -> FastAPI:
 
 def _include_routers(app: FastAPI) -> None:
     """Import and mount all API routers under /api/v1."""
-    from app.api.routes import advanced, analytics, dashboard, detection, export, health, humanization, plagiarism, realtime
+    from app.api.routes import (
+        advanced,
+        analytics,
+        dashboard,
+        detection,
+        export,
+        health,
+        humanization,
+        plagiarism,
+        realtime,
+    )
 
     prefix = "/api/v1"
 

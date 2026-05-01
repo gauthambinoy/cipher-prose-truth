@@ -11,8 +11,8 @@ from __future__ import annotations
 
 import logging
 import re
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from dataclasses import dataclass
+from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -53,18 +53,21 @@ class TargetedHumanizer:
     def _get_detector(self):
         if self._detector is None:
             from app.ml.detectors.sentence_level import SentenceLevelDetector
+
             self._detector = SentenceLevelDetector()
         return self._detector
 
     def _get_lexical(self):
         if self._lexical is None:
             from app.ml.humanizer.lexical_humanizer import LexicalHumanizer
+
             self._lexical = LexicalHumanizer(seed=self._seed)
         return self._lexical
 
     def _get_structural(self):
         if self._structural is None:
             from app.ml.humanizer.structural_humanizer import StructuralHumanizer
+
             self._structural = StructuralHumanizer(seed=self._seed)
         return self._structural
 
@@ -195,22 +198,22 @@ class TargetedHumanizer:
                 rewritten = self._humanize_sentence(sent, style=style)
                 new_sentences.append(rewritten)
                 modified_count += 1
-                modifications.append({
-                    "sentence_index": i,
-                    "original": sent[:300],
-                    "rewritten": rewritten[:300],
-                    "ai_probability": round(ai_prob, 4),
-                    "action": "rewritten",
-                })
+                modifications.append(
+                    {
+                        "sentence_index": i,
+                        "original": sent[:300],
+                        "rewritten": rewritten[:300],
+                        "ai_probability": round(ai_prob, 4),
+                        "action": "rewritten",
+                    }
+                )
             else:
                 # Human or uncertain -- preserve as-is
                 new_sentences.append(sent)
                 preserved_count += 1
 
         # Step 3: Reconstruct full text
-        humanized_text = self._reconstruct_text(
-            text, original_sentences, new_sentences
-        )
+        humanized_text = self._reconstruct_text(text, original_sentences, new_sentences)
 
         return TargetedHumanizationResult(
             original_text=text,

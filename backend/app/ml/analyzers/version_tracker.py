@@ -107,7 +107,7 @@ class VersionTracker:
         if len(words) < 10:
             return 0.5
 
-        sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+        sentences = re.split(r"(?<=[.!?])\s+", text.strip())
         sentences = [s for s in sentences if len(s.strip()) > 5]
         if not sentences:
             return 0.5
@@ -116,7 +116,9 @@ class VersionTracker:
         sent_lengths = [len(s.split()) for s in sentences]
         mean_len = sum(sent_lengths) / len(sent_lengths)
         if mean_len > 0:
-            std_len = (sum((l - mean_len) ** 2 for l in sent_lengths) / len(sent_lengths)) ** 0.5
+            std_len = (
+                sum((length - mean_len) ** 2 for length in sent_lengths) / len(sent_lengths)
+            ) ** 0.5
             cov = std_len / mean_len
         else:
             cov = 0
@@ -168,7 +170,11 @@ class VersionTracker:
             previous_score = prev["ai_score"]
             diff_summary = self._compute_diff(prev["text"], text)
         else:
-            diff_summary = {"words_added": len(self._tokenize(text)), "words_removed": 0, "words_changed": 0}
+            diff_summary = {
+                "words_added": len(self._tokenize(text)),
+                "words_removed": 0,
+                "words_changed": 0,
+            }
 
         version_entry = {
             "version_number": version_number,
@@ -180,7 +186,9 @@ class VersionTracker:
         }
         versions.append(version_entry)
 
-        score_change = round(current_score - previous_score, 4) if previous_score is not None else 0.0
+        score_change = (
+            round(current_score - previous_score, 4) if previous_score is not None else 0.0
+        )
 
         # Build score trajectory
         score_trajectory = [

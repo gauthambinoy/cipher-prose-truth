@@ -5,20 +5,21 @@ Exact / near-exact plagiarism detection using document fingerprinting
 
 import hashlib
 import logging
-from typing import Any, Dict, List, Set, Tuple
+from typing import Any, Dict, List, Set
 
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Winnowing parameters
 # ---------------------------------------------------------------------------
-DEFAULT_K_GRAM_SIZE = 5      # number of words per k-gram
-DEFAULT_WINDOW_SIZE = 4      # winnowing window size
+DEFAULT_K_GRAM_SIZE = 5  # number of words per k-gram
+DEFAULT_WINDOW_SIZE = 4  # winnowing window size
 
 
 def _normalize(text: str) -> str:
     """Lower-case, strip punctuation, collapse whitespace."""
     import re
+
     text = text.lower()
     text = re.sub(r"[^\w\s]", "", text)
     text = re.sub(r"\s+", " ", text).strip()
@@ -27,7 +28,7 @@ def _normalize(text: str) -> str:
 
 def _kgrams(words: List[str], k: int) -> List[str]:
     """Generate k-gram strings from a word list."""
-    return [" ".join(words[i: i + k]) for i in range(len(words) - k + 1)]
+    return [" ".join(words[i : i + k]) for i in range(len(words) - k + 1)]
 
 
 def _hash_kgram(kgram: str) -> int:
@@ -74,7 +75,7 @@ class ExactMatcher:
         prev_min_idx = -1
 
         for i in range(len(hashes) - self.window + 1):
-            window_hashes = hashes[i: i + self.window]
+            window_hashes = hashes[i : i + self.window]
             # Find rightmost minimum
             min_val = min(window_hashes)
             # Rightmost occurrence of min_val in window
@@ -132,14 +133,14 @@ class ExactMatcher:
             prev, curr = curr, [0] * (n + 1)
 
         start_a = end_a - max_len
-        substring = " ".join(words_a[start_a: end_a])
+        substring = " ".join(words_a[start_a:end_a])
 
         # Find position in text_b
         pos_b = -1
         if max_len > 0:
-            target = words_a[start_a: end_a]
+            target = words_a[start_a:end_a]
             for j in range(len(words_b) - max_len + 1):
-                if words_b[j: j + max_len] == target:
+                if words_b[j : j + max_len] == target:
                     pos_b = j
                     break
 

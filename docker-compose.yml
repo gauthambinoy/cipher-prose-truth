@@ -10,7 +10,7 @@ services:
       - DATABASE_URL=sqlite+aiosqlite:///./data/clarityai.db
       - OLLAMA_BASE_URL=http://host.docker.internal:11434
       - CORS_ORIGINS=http://localhost:5173,http://localhost:3000
-      - SECRET_KEY=${SECRET_KEY:-change-me-in-production}
+      - SECRET_KEY=${SECRET_KEY:-dev-only-change-me}
     volumes:
       - db-data:/app/data
       - uploads:/app/uploads

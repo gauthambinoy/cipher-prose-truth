@@ -10,10 +10,9 @@ meta description suitability.
 from __future__ import annotations
 
 import logging
-import math
 import re
 from collections import Counter
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -22,37 +21,96 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 TRANSITION_WORDS: set[str] = {
     # Addition
-    "also", "furthermore", "moreover", "additionally", "besides", "likewise",
-    "similarly", "equally", "too", "again", "further", "then",
+    "also",
+    "furthermore",
+    "moreover",
+    "additionally",
+    "besides",
+    "likewise",
+    "similarly",
+    "equally",
+    "too",
+    "again",
+    "further",
+    "then",
     # Contrast
-    "however", "nevertheless", "nonetheless", "although", "though", "whereas",
-    "while", "but", "yet", "still", "instead", "conversely", "alternatively",
-    "rather", "otherwise",
+    "however",
+    "nevertheless",
+    "nonetheless",
+    "although",
+    "though",
+    "whereas",
+    "while",
+    "but",
+    "yet",
+    "still",
+    "instead",
+    "conversely",
+    "alternatively",
+    "rather",
+    "otherwise",
     # Cause / effect
-    "because", "since", "therefore", "consequently", "thus", "hence",
-    "accordingly", "so",
+    "because",
+    "since",
+    "therefore",
+    "consequently",
+    "thus",
+    "hence",
+    "accordingly",
+    "so",
     # Sequence
-    "first", "firstly", "second", "secondly", "third", "thirdly",
-    "finally", "next", "meanwhile", "afterward", "afterwards", "subsequently",
-    "previously", "lastly",
+    "first",
+    "firstly",
+    "second",
+    "secondly",
+    "third",
+    "thirdly",
+    "finally",
+    "next",
+    "meanwhile",
+    "afterward",
+    "afterwards",
+    "subsequently",
+    "previously",
+    "lastly",
     # Emphasis
-    "indeed", "certainly", "surely", "clearly", "obviously", "especially",
-    "particularly", "notably", "importantly", "significantly",
+    "indeed",
+    "certainly",
+    "surely",
+    "clearly",
+    "obviously",
+    "especially",
+    "particularly",
+    "notably",
+    "importantly",
+    "significantly",
     # Example
-    "for example", "for instance", "specifically", "namely", "such as",
-    "including", "particularly",
+    "for example",
+    "for instance",
+    "specifically",
+    "namely",
+    "such as",
+    "including",
+    "particularly",
     # Conclusion
-    "in conclusion", "to summarize", "overall", "ultimately", "in summary",
-    "in short", "briefly",
+    "in conclusion",
+    "to summarize",
+    "overall",
+    "ultimately",
+    "in summary",
+    "in short",
+    "briefly",
     # Comparison
-    "similarly", "likewise", "compared to", "in comparison", "just as",
+    "similarly",
+    "likewise",
+    "compared to",
+    "in comparison",
+    "just as",
     "in the same way",
 }
 
 # Multi-word transitions that need phrase matching
-_MULTI_WORD_TRANSITIONS: List[str] = [
-    t for t in TRANSITION_WORDS if " " in t
-]
+_MULTI_WORD_TRANSITIONS: List[str] = [t for t in TRANSITION_WORDS if " " in t]
 
 # Passive voice auxiliary + past participle pattern
 _PASSIVE_RE = re.compile(
@@ -70,24 +128,117 @@ _PASSIVE_PRECISE_RE = re.compile(
 
 # Stop words to exclude from keyword analysis
 _STOP_WORDS: set[str] = {
-    "a", "an", "the", "and", "or", "but", "in", "on", "at", "to", "for",
-    "of", "with", "by", "from", "is", "are", "was", "were", "be", "been",
-    "being", "have", "has", "had", "do", "does", "did", "will", "would",
-    "could", "should", "may", "might", "shall", "can", "this", "that",
-    "these", "those", "it", "its", "not", "no", "nor", "so", "if", "as",
-    "up", "out", "about", "into", "over", "after", "than", "then", "very",
-    "just", "also", "more", "most", "other", "some", "such", "only",
-    "same", "both", "each", "all", "any", "few", "many", "much", "own",
-    "new", "old", "well", "even", "here", "there", "when", "where", "how",
-    "what", "which", "who", "whom", "why", "our", "your", "my", "his",
-    "her", "their", "we", "you", "he", "she", "they", "i", "me", "him",
-    "us", "them",
+    "a",
+    "an",
+    "the",
+    "and",
+    "or",
+    "but",
+    "in",
+    "on",
+    "at",
+    "to",
+    "for",
+    "of",
+    "with",
+    "by",
+    "from",
+    "is",
+    "are",
+    "was",
+    "were",
+    "be",
+    "been",
+    "being",
+    "have",
+    "has",
+    "had",
+    "do",
+    "does",
+    "did",
+    "will",
+    "would",
+    "could",
+    "should",
+    "may",
+    "might",
+    "shall",
+    "can",
+    "this",
+    "that",
+    "these",
+    "those",
+    "it",
+    "its",
+    "not",
+    "no",
+    "nor",
+    "so",
+    "if",
+    "as",
+    "up",
+    "out",
+    "about",
+    "into",
+    "over",
+    "after",
+    "than",
+    "then",
+    "very",
+    "just",
+    "also",
+    "more",
+    "most",
+    "other",
+    "some",
+    "such",
+    "only",
+    "same",
+    "both",
+    "each",
+    "all",
+    "any",
+    "few",
+    "many",
+    "much",
+    "own",
+    "new",
+    "old",
+    "well",
+    "even",
+    "here",
+    "there",
+    "when",
+    "where",
+    "how",
+    "what",
+    "which",
+    "who",
+    "whom",
+    "why",
+    "our",
+    "your",
+    "my",
+    "his",
+    "her",
+    "their",
+    "we",
+    "you",
+    "he",
+    "she",
+    "they",
+    "i",
+    "me",
+    "him",
+    "us",
+    "them",
 }
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _split_sentences(text: str) -> List[str]:
     sentences = re.split(r"(?<=[.!?])\s+", text.strip())
@@ -112,6 +263,7 @@ def _count_syllables(word: str) -> int:
 # ---------------------------------------------------------------------------
 # SEO Analyzer
 # ---------------------------------------------------------------------------
+
 
 class SEOAnalyzer:
     """Comprehensive SEO content quality analyzer."""
@@ -160,10 +312,7 @@ class SEOAnalyzer:
         # 7. Sentence length distribution
         sentence_metrics = self._sentence_length_metrics(sentences)
 
-        # 8. Internal linking opportunities
-        link_opportunities = self._internal_link_opportunities(words, word_count)
-
-        # 9. Meta description check
+        # 8. Meta description check
         meta_check = self._meta_description_check(paragraphs)
 
         # Build metrics
@@ -235,12 +384,14 @@ class SEOAnalyzer:
             md_match = re.match(r"^(#{1,6})\s+(.+)", stripped)
             if md_match:
                 level = len(md_match.group(1))
-                headings.append({
-                    "text": md_match.group(2).strip(),
-                    "level": level,
-                    "type": "markdown",
-                    "line": i + 1,
-                })
+                headings.append(
+                    {
+                        "text": md_match.group(2).strip(),
+                        "level": level,
+                        "type": "markdown",
+                        "line": i + 1,
+                    }
+                )
                 continue
 
             # ALL CAPS lines (at least 3 words, all uppercase alpha chars)
@@ -251,12 +402,14 @@ class SEOAnalyzer:
                 and stripped == stripped.upper()
                 and any(c.isalpha() for c in stripped)
             ):
-                headings.append({
-                    "text": stripped,
-                    "level": 2,  # treat as H2
-                    "type": "all_caps",
-                    "line": i + 1,
-                })
+                headings.append(
+                    {
+                        "text": stripped,
+                        "level": 2,  # treat as H2
+                        "type": "all_caps",
+                        "line": i + 1,
+                    }
+                )
 
         return headings
 
@@ -273,11 +426,7 @@ class SEOAnalyzer:
             return 0.0
 
         num_syllables = sum(_count_syllables(w) for w in words)
-        fre = (
-            206.835
-            - 1.015 * (num_words / num_sentences)
-            - 84.6 * (num_syllables / num_words)
-        )
+        fre = 206.835 - 1.015 * (num_words / num_sentences) - 84.6 * (num_syllables / num_words)
         return round(max(0.0, min(100.0, fre)), 2)
 
     # ------------------------------------------------------------------
@@ -371,16 +520,16 @@ class SEOAnalyzer:
 
         lengths = [len(s.split()) for s in sentences]
         avg = sum(lengths) / len(lengths)
-        long_count = sum(1 for l in lengths if l > 20)
+        long_count = sum(1 for length in lengths if length > 20)
 
         # Distribution buckets
         buckets = {"1-10": 0, "11-20": 0, "21-30": 0, "31+": 0}
-        for l in lengths:
-            if l <= 10:
+        for length in lengths:
+            if length <= 10:
                 buckets["1-10"] += 1
-            elif l <= 20:
+            elif length <= 20:
                 buckets["11-20"] += 1
-            elif l <= 30:
+            elif length <= 30:
                 buckets["21-30"] += 1
             else:
                 buckets["31+"] += 1
@@ -396,9 +545,7 @@ class SEOAnalyzer:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _internal_link_opportunities(
-        words: List[str], word_count: int
-    ) -> List[Dict[str, Any]]:
+    def _internal_link_opportunities(words: List[str], word_count: int) -> List[Dict[str, Any]]:
         """Detect repeated key phrases that could be internal link anchors."""
         # Build 2-gram and 3-gram counts (excluding stop words at boundaries)
         filtered = [w.lower() for w in words]
@@ -407,7 +554,7 @@ class SEOAnalyzer:
         for n in (2, 3):
             ngram_counter: Counter = Counter()
             for i in range(len(filtered) - n + 1):
-                gram = tuple(filtered[i: i + n])
+                gram = tuple(filtered[i : i + n])
                 # Skip if starts or ends with stop word
                 if gram[0] in _STOP_WORDS or gram[-1] in _STOP_WORDS:
                     continue
@@ -416,11 +563,13 @@ class SEOAnalyzer:
             for gram, freq in ngram_counter.most_common(10):
                 if freq >= 3:
                     phrase = " ".join(gram)
-                    opportunities.append({
-                        "phrase": phrase,
-                        "frequency": freq,
-                        "suggestion": f"Consider linking '{phrase}' to a relevant internal page.",
-                    })
+                    opportunities.append(
+                        {
+                            "phrase": phrase,
+                            "frequency": freq,
+                            "suggestion": f"Consider linking '{phrase}' to a relevant internal page.",
+                        }
+                    )
 
         # Deduplicate and limit
         seen: set = set()
@@ -474,42 +623,60 @@ class SEOAnalyzer:
         # Word count
         wc = metrics["word_count"]
         if wc < 300:
-            recs.append(f"Content is only {wc} words. Aim for at least 300 words for SEO value; 1000+ is ideal.")
+            recs.append(
+                f"Content is only {wc} words. Aim for at least 300 words for SEO value; 1000+ is ideal."
+            )
         elif wc < 1000:
-            recs.append(f"Content is {wc} words. Longer content (1000+ words) tends to rank better.")
+            recs.append(
+                f"Content is {wc} words. Longer content (1000+ words) tends to rank better."
+            )
 
         # Headings
         if not headings:
-            recs.append("No headings detected. Add H1/H2/H3 headings to structure your content for search engines.")
+            recs.append(
+                "No headings detected. Add H1/H2/H3 headings to structure your content for search engines."
+            )
         elif not any(h["level"] == 1 for h in headings):
             recs.append("No H1 heading found. Every page should have exactly one H1.")
 
         # Readability
         flesch = metrics["flesch_reading_ease"]
         if flesch < 60:
-            recs.append(f"Readability score is {flesch} (target: 60-70). Simplify sentences and use shorter words.")
+            recs.append(
+                f"Readability score is {flesch} (target: 60-70). Simplify sentences and use shorter words."
+            )
         elif flesch > 70:
-            recs.append(f"Readability score is {flesch}. This is easy to read, but ensure depth isn't sacrificed.")
+            recs.append(
+                f"Readability score is {flesch}. This is easy to read, but ensure depth isn't sacrificed."
+            )
 
         # Paragraph length
         if para_metrics["too_long_paragraphs"]:
             count = len(para_metrics["too_long_paragraphs"])
-            recs.append(f"{count} paragraph(s) have more than 4 sentences. Break them up for better web readability.")
+            recs.append(
+                f"{count} paragraph(s) have more than 4 sentences. Break them up for better web readability."
+            )
 
         # Transition words
         trans = metrics["transition_word_percentage"]
         if trans < 25:
-            recs.append(f"Transition word usage is {trans}% (target: >25%). Add more transitional phrases between ideas.")
+            recs.append(
+                f"Transition word usage is {trans}% (target: >25%). Add more transitional phrases between ideas."
+            )
 
         # Passive voice
         passive = metrics["passive_voice_percentage"]
         if passive > 15:
-            recs.append(f"Passive voice is {passive}% (target: <15%). Rewrite passive sentences in active voice.")
+            recs.append(
+                f"Passive voice is {passive}% (target: <15%). Rewrite passive sentences in active voice."
+            )
 
         # Sentence length
         avg_sent = metrics["avg_sentence_length"]
         if avg_sent > 20:
-            recs.append(f"Average sentence length is {avg_sent} words (target: <20). Shorten long sentences.")
+            recs.append(
+                f"Average sentence length is {avg_sent} words (target: <20). Shorten long sentences."
+            )
 
         long_count = metrics["long_sentence_count"]
         if long_count > 0:
@@ -519,9 +686,13 @@ class SEOAnalyzer:
         if not metrics["meta_description_ideal"]:
             meta_len = metrics["meta_description_length"]
             if meta_len < 150:
-                recs.append(f"First paragraph ({meta_len} chars) is too short for a meta description. Aim for 150-160 chars.")
+                recs.append(
+                    f"First paragraph ({meta_len} chars) is too short for a meta description. Aim for 150-160 chars."
+                )
             elif meta_len > 160:
-                recs.append(f"First paragraph ({meta_len} chars) is too long for a meta description. Trim to 150-160 chars.")
+                recs.append(
+                    f"First paragraph ({meta_len} chars) is too long for a meta description. Trim to 150-160 chars."
+                )
 
         if not recs:
             recs.append("Content meets all major SEO targets. Keep up the good work!")
@@ -533,9 +704,7 @@ class SEOAnalyzer:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _compute_seo_score(
-        metrics: Dict[str, Any], headings: List[Dict[str, Any]]
-    ) -> float:
+    def _compute_seo_score(metrics: Dict[str, Any], headings: List[Dict[str, Any]]) -> float:
         """Compute an overall SEO score 0-100."""
         score = 0.0
 

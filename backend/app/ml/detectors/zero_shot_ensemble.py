@@ -17,9 +17,9 @@ logger = logging.getLogger(__name__)
 
 # Registry keys that map to text-classification pipelines
 _PIPELINE_KEYS = (
-    "roberta-detector-1",   # Hello-SimpleAI/chatgpt-detector-roberta
-    "roberta-detector-2",   # openai-community/roberta-large-openai-detector
-    "ai-detector-3",        # PirateXX/AI-Content-Detector
+    "roberta-detector-1",  # Hello-SimpleAI/chatgpt-detector-roberta
+    "roberta-detector-2",  # openai-community/roberta-large-openai-detector
+    "ai-detector-3",  # PirateXX/AI-Content-Detector
 )
 
 # Label normalisation:  every pipeline may use different label strings
@@ -63,19 +63,23 @@ class ZeroShotEnsembleDetector(BaseDetector):
                     result = result[0]
                 ai_score = self._normalise_score(result)
                 scores.append(ai_score)
-                individual.append({
-                    "model": key,
-                    "raw_label": result.get("label", ""),
-                    "raw_score": round(float(result.get("score", 0.0)), 4),
-                    "ai_score": round(ai_score, 4),
-                })
+                individual.append(
+                    {
+                        "model": key,
+                        "raw_label": result.get("label", ""),
+                        "raw_score": round(float(result.get("score", 0.0)), 4),
+                        "ai_score": round(ai_score, 4),
+                    }
+                )
             except Exception as exc:
                 logger.warning("Pipeline %s failed: %s", key, exc)
-                individual.append({
-                    "model": key,
-                    "error": str(exc),
-                    "ai_score": 0.5,
-                })
+                individual.append(
+                    {
+                        "model": key,
+                        "error": str(exc),
+                        "ai_score": 0.5,
+                    }
+                )
                 scores.append(0.5)
 
         avg_score = float(sum(scores) / len(scores)) if scores else 0.5
@@ -86,9 +90,9 @@ class ZeroShotEnsembleDetector(BaseDetector):
 
         ai_prob = self._clamp(avg_score)
         confidence = (
-            "high" if consensus and abs(ai_prob - 0.5) > 0.3
-            else "medium" if abs(ai_prob - 0.5) > 0.15
-            else "low"
+            "high"
+            if consensus and abs(ai_prob - 0.5) > 0.3
+            else "medium" if abs(ai_prob - 0.5) > 0.15 else "low"
         )
 
         return {

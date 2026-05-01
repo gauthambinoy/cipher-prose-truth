@@ -20,6 +20,7 @@ from tests.conftest import AI_TEXT, HUMAN_TEXT, SHORT_TEXT
 # BaseDetector helpers
 # ---------------------------------------------------------------------------
 
+
 class TestBaseDetectorHelpers:
     """Tests for shared utility methods on BaseDetector."""
 
@@ -78,12 +79,14 @@ class TestBaseDetectorHelpers:
 # EntropyAnalyzerDetector — purely statistical, no model required
 # ---------------------------------------------------------------------------
 
+
 class TestEntropyAnalyzerDetector:
     """Tests for the entropy-based AI detector."""
 
     @pytest.fixture
     def detector(self):
         from app.ml.detectors.entropy_analyzer import EntropyAnalyzerDetector
+
         return EntropyAnalyzerDetector()
 
     @pytest.mark.asyncio
@@ -142,12 +145,14 @@ class TestEntropyAnalyzerDetector:
 # VocabularyRichnessDetector — purely statistical, no model required
 # ---------------------------------------------------------------------------
 
+
 class TestVocabularyRichnessDetector:
     """Tests for the vocabulary-richness detector."""
 
     @pytest.fixture
     def detector(self):
         from app.ml.detectors.vocabulary_richness import VocabularyRichnessDetector
+
         return VocabularyRichnessDetector()
 
     @pytest.mark.asyncio
@@ -192,12 +197,14 @@ class TestVocabularyRichnessDetector:
 # RepetitionDetector helpers — no spaCy model needed for static methods
 # ---------------------------------------------------------------------------
 
+
 class TestRepetitionDetectorHelpers:
     """Tests for the repetition detector's static/helper methods."""
 
     @pytest.fixture
     def detector(self):
         from app.ml.detectors.repetition import RepetitionDetector
+
         return RepetitionDetector()
 
     def test_tokenize_basic(self, detector):

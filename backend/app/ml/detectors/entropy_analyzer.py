@@ -11,26 +11,67 @@ import math
 import re
 import logging
 from collections import Counter
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 
 from app.ml.detectors.base import BaseDetector
-from app.ml.models.model_registry import ModelRegistry
 
 logger = logging.getLogger(__name__)
 
 AI_BUZZWORDS: List[str] = [
-    "delve", "tapestry", "holistic", "synergy", "leverage",
-    "paradigm", "nuanced", "multifaceted", "comprehensive", "robust",
-    "innovative", "cutting-edge", "groundbreaking", "transformative",
-    "pivotal", "crucial", "paramount", "fundamental", "intricate",
-    "seamless", "streamline", "optimize", "utilize", "facilitate",
-    "implement", "navigate", "landscape", "ecosystem", "framework",
-    "methodology", "trajectory", "juxtaposition", "dichotomy",
-    "underscore", "underpin", "elucidate", "articulate", "enumerate",
-    "delineate", "synthesize", "extrapolate", "interpolate",
-    "contextualize", "conceptualize", "operationalize", "spearhead",
-    "bolster", "augment", "mitigate", "alleviate", "exacerbate",
-    "culminate", "epitomize", "exemplify",
+    "delve",
+    "tapestry",
+    "holistic",
+    "synergy",
+    "leverage",
+    "paradigm",
+    "nuanced",
+    "multifaceted",
+    "comprehensive",
+    "robust",
+    "innovative",
+    "cutting-edge",
+    "groundbreaking",
+    "transformative",
+    "pivotal",
+    "crucial",
+    "paramount",
+    "fundamental",
+    "intricate",
+    "seamless",
+    "streamline",
+    "optimize",
+    "utilize",
+    "facilitate",
+    "implement",
+    "navigate",
+    "landscape",
+    "ecosystem",
+    "framework",
+    "methodology",
+    "trajectory",
+    "juxtaposition",
+    "dichotomy",
+    "underscore",
+    "underpin",
+    "elucidate",
+    "articulate",
+    "enumerate",
+    "delineate",
+    "synthesize",
+    "extrapolate",
+    "interpolate",
+    "contextualize",
+    "conceptualize",
+    "operationalize",
+    "spearhead",
+    "bolster",
+    "augment",
+    "mitigate",
+    "alleviate",
+    "exacerbate",
+    "culminate",
+    "epitomize",
+    "exemplify",
 ]
 
 AI_PHRASE_PATTERNS: List[str] = [
@@ -124,9 +165,7 @@ class EntropyAnalyzerDetector(BaseDetector):
         bw_score = self._sigmoid((bw_density - 0.02) / 0.01)
         ph_score = self._sigmoid((ph_density - 0.005) / 0.003)
 
-        ai_prob = self._clamp(
-            0.35 * ent_score + 0.35 * bw_score + 0.30 * ph_score
-        )
+        ai_prob = self._clamp(0.35 * ent_score + 0.35 * bw_score + 0.30 * ph_score)
         confidence = self._compute_confidence([ent_score, bw_score, ph_score])
 
         return {

@@ -10,7 +10,7 @@ from __future__ import annotations
 import re
 import logging
 from collections import Counter
-from typing import Dict, List
+from typing import List
 
 import numpy as np
 
@@ -30,14 +30,14 @@ class RepetitionDetector(BaseDetector):
     def _ngram_repetition_rate(tokens: List[str], n: int) -> float:
         if len(tokens) < n:
             return 0.0
-        ngrams = [tuple(tokens[i: i + n]) for i in range(len(tokens) - n + 1)]
+        ngrams = [tuple(tokens[i : i + n]) for i in range(len(tokens) - n + 1)]
         freq = Counter(ngrams)
         repeated = sum(c for c in freq.values() if c > 1)
         return repeated / max(len(ngrams), 1)
 
     @staticmethod
     def _sentence_split(text: str) -> List[str]:
-        sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+        sentences = re.split(r"(?<=[.!?])\s+", text.strip())
         return [s.strip() for s in sentences if len(s.strip()) > 3]
 
     @staticmethod
@@ -47,9 +47,7 @@ class RepetitionDetector(BaseDetector):
         openers = []
         for s in sentences:
             words = s.split()
-            if len(words) >= 2:
-                openers.append(f"{words[0].lower()} {words[1].lower()}")
-            elif words:
+            if words:
                 openers.append(words[0].lower())
         unique = len(set(openers))
         return unique / max(len(openers), 1)
@@ -108,9 +106,7 @@ class RepetitionDetector(BaseDetector):
         ai_prob = self._clamp(
             0.25 * rep_score + 0.25 * opener_score + 0.25 * var_score + 0.25 * pos_score
         )
-        confidence = self._compute_confidence(
-            [rep_score, opener_score, var_score, pos_score]
-        )
+        confidence = self._compute_confidence([rep_score, opener_score, var_score, pos_score])
 
         return {
             "signal": signal,

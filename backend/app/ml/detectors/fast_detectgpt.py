@@ -30,7 +30,10 @@ class FastDetectGPTDetector(BaseDetector):
     def _log_probability(text: str, model, tokenizer) -> float:
         device = next(model.parameters()).device
         enc = tokenizer(
-            text, return_tensors="pt", truncation=True, max_length=MAX_LENGTH,
+            text,
+            return_tensors="pt",
+            truncation=True,
+            max_length=MAX_LENGTH,
         ).to(device)
         input_ids = enc["input_ids"]
         if input_ids.size(1) < 2:
@@ -41,11 +44,17 @@ class FastDetectGPTDetector(BaseDetector):
     @staticmethod
     @torch.no_grad()
     def _sample_perturbed_logprobs(
-        text: str, model, tokenizer, n_samples: int,
+        text: str,
+        model,
+        tokenizer,
+        n_samples: int,
     ) -> List[float]:
         device = next(model.parameters()).device
         enc = tokenizer(
-            text, return_tensors="pt", truncation=True, max_length=MAX_LENGTH,
+            text,
+            return_tensors="pt",
+            truncation=True,
+            max_length=MAX_LENGTH,
         ).to(device)
         input_ids = enc["input_ids"]
         seq_len = input_ids.size(1)
@@ -80,7 +89,10 @@ class FastDetectGPTDetector(BaseDetector):
 
         original_lp = self._log_probability(text, model, tokenizer)
         sampled_lps = self._sample_perturbed_logprobs(
-            text, model, tokenizer, NUM_SAMPLES,
+            text,
+            model,
+            tokenizer,
+            NUM_SAMPLES,
         )
 
         mu = float(np.mean(sampled_lps))
@@ -91,9 +103,7 @@ class FastDetectGPTDetector(BaseDetector):
 
         sample_cv = sigma / (abs(mu) + 1e-8)
         conf_score = self._clamp(1.0 - sample_cv)
-        confidence = (
-            "high" if conf_score > 0.7 else "medium" if conf_score > 0.4 else "low"
-        )
+        confidence = "high" if conf_score > 0.7 else "medium" if conf_score > 0.4 else "low"
 
         return {
             "signal": signal,

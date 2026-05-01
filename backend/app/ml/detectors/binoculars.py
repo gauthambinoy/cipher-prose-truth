@@ -32,7 +32,10 @@ class BinocularsDetector(BaseDetector):
     def _cross_entropy(text: str, model, tokenizer) -> float:
         device = next(model.parameters()).device
         enc = tokenizer(
-            text, return_tensors="pt", truncation=True, max_length=MAX_LENGTH,
+            text,
+            return_tensors="pt",
+            truncation=True,
+            max_length=MAX_LENGTH,
         ).to(device)
         input_ids = enc["input_ids"]
         if input_ids.size(1) < 2:
@@ -54,13 +57,9 @@ class BinocularsDetector(BaseDetector):
         ratio = observer_ce / performer_ce if performer_ce > 1e-8 else 1.0
 
         if ratio <= THRESHOLD_AI:
-            ai_prob = self._clamp(
-                0.7 + 0.3 * (THRESHOLD_AI - ratio) / THRESHOLD_AI
-            )
+            ai_prob = self._clamp(0.7 + 0.3 * (THRESHOLD_AI - ratio) / THRESHOLD_AI)
         elif ratio >= THRESHOLD_HUMAN:
-            ai_prob = self._clamp(
-                0.3 - 0.3 * (ratio - THRESHOLD_HUMAN) / THRESHOLD_HUMAN
-            )
+            ai_prob = self._clamp(0.3 - 0.3 * (ratio - THRESHOLD_HUMAN) / THRESHOLD_HUMAN)
         else:
             ai_prob = self._clamp(
                 0.7 - 0.4 * (ratio - THRESHOLD_AI) / (THRESHOLD_HUMAN - THRESHOLD_AI)

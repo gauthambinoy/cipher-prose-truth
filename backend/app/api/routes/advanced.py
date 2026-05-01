@@ -7,19 +7,15 @@ from __future__ import annotations
 
 import base64
 import hashlib
-import json
 import logging
 import secrets
-import time
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.database import get_db
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/advanced")
@@ -33,6 +29,7 @@ _share_store: Dict[str, Dict[str, Any]] = {}
 
 
 # ── Pydantic schemas ────────────────────────────────────────────────────
+
 
 class TextRequest(BaseModel):
     text: str = Field(..., min_length=1, max_length=100_000)
@@ -59,6 +56,7 @@ class ShareRequest(BaseModel):
 
 
 # ── Response schemas ─────────────────────────────────────────────────────
+
 
 class RewriteDetectionResponse(BaseModel):
     signal: str
@@ -155,32 +153,39 @@ class ShareResponse(BaseModel):
 
 # ── Helper: lazy loaders ────────────────────────────────────────────────
 
+
 def _get_rewrite_detector():
     from app.ml.detectors.rewrite_detector import RewriteDetector
+
     return RewriteDetector()
 
 
 def _get_fingerprinter():
     from app.ml.analyzers.document_fingerprint import DocumentFingerprinter
+
     return DocumentFingerprinter()
 
 
 def _get_version_tracker():
     from app.ml.analyzers.version_tracker import VersionTracker
+
     return VersionTracker()
 
 
 def _get_writing_coach():
     from app.ml.analyzers.writing_coach import WritingCoach
+
     return WritingCoach()
 
 
 def _get_batch_processor():
     from app.ml.analyzers.batch_processor import BatchProcessor
+
     return BatchProcessor()
 
 
 # ── SVG QR code generator (no external dependency) ──────────────────────
+
 
 def _generate_qr_svg_base64(data: str) -> str:
     """
@@ -215,7 +220,9 @@ def _generate_qr_svg_base64(data: str) -> str:
                 if is_border or is_inner:
                     x = (fx + dx) * cell
                     y = (fy + dy) * cell
-                    svg_parts.append(f'<rect x="{x}" y="{y}" width="{cell}" height="{cell}" fill="black"/>')
+                    svg_parts.append(
+                        f'<rect x="{x}" y="{y}" width="{cell}" height="{cell}" fill="black"/>'
+                    )
                     finder_cells.add((fx + dx, fy + dy))
 
     # Fill remaining cells with data-derived pattern
@@ -223,18 +230,21 @@ def _generate_qr_svg_base64(data: str) -> str:
         for col in range(size):
             if (col, row) in finder_cells:
                 continue
-            if bit_idx < len(bits) and bits[bit_idx] == '1':
+            if bit_idx < len(bits) and bits[bit_idx] == "1":
                 x = col * cell
                 y = row * cell
-                svg_parts.append(f'<rect x="{x}" y="{y}" width="{cell}" height="{cell}" fill="black"/>')
+                svg_parts.append(
+                    f'<rect x="{x}" y="{y}" width="{cell}" height="{cell}" fill="black"/>'
+                )
             bit_idx = (bit_idx + 1) % len(bits)
 
-    svg_parts.append('</svg>')
+    svg_parts.append("</svg>")
     svg_str = "\n".join(svg_parts)
     return base64.b64encode(svg_str.encode("utf-8")).decode("utf-8")
 
 
 # ── Routes ───────────────────────────────────────────────────────────────
+
 
 # 1. Rewrite Detection
 @router.post("/rewrite-detect", response_model=RewriteDetectionResponse)
@@ -274,9 +284,13 @@ async def verify_fingerprints(request: FingerprintVerifyRequest):
     fp2 = _fingerprint_store.get(request.fingerprint_id_2)
 
     if fp1 is None:
-        raise HTTPException(status_code=404, detail=f"Fingerprint {request.fingerprint_id_1} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Fingerprint {request.fingerprint_id_1} not found"
+        )
     if fp2 is None:
-        raise HTTPException(status_code=404, detail=f"Fingerprint {request.fingerprint_id_2} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Fingerprint {request.fingerprint_id_2} not found"
+        )
 
     fingerprinter = _get_fingerprinter()
     result = fingerprinter.verify_fingerprints(fp1, fp2)

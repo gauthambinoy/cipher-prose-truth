@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 import re
 from collections import Counter
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -18,18 +18,116 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 _STOPWORDS: set[str] = {
-    "a", "an", "the", "and", "or", "but", "in", "on", "at", "to", "for",
-    "of", "with", "by", "from", "is", "it", "as", "was", "are", "be",
-    "been", "being", "have", "has", "had", "do", "does", "did", "will",
-    "would", "could", "should", "may", "might", "shall", "can", "this",
-    "that", "these", "those", "i", "you", "he", "she", "we", "they", "me",
-    "him", "her", "us", "them", "my", "your", "his", "its", "our", "their",
-    "what", "which", "who", "whom", "when", "where", "why", "how", "all",
-    "each", "every", "both", "few", "more", "most", "other", "some", "such",
-    "no", "not", "only", "own", "same", "so", "than", "too", "very", "just",
-    "because", "if", "about", "up", "out", "then", "into", "also", "after",
-    "before", "over", "between", "through", "during", "without", "again",
-    "further", "once", "here", "there", "any", "am", "were", "while",
+    "a",
+    "an",
+    "the",
+    "and",
+    "or",
+    "but",
+    "in",
+    "on",
+    "at",
+    "to",
+    "for",
+    "of",
+    "with",
+    "by",
+    "from",
+    "is",
+    "it",
+    "as",
+    "was",
+    "are",
+    "be",
+    "been",
+    "being",
+    "have",
+    "has",
+    "had",
+    "do",
+    "does",
+    "did",
+    "will",
+    "would",
+    "could",
+    "should",
+    "may",
+    "might",
+    "shall",
+    "can",
+    "this",
+    "that",
+    "these",
+    "those",
+    "i",
+    "you",
+    "he",
+    "she",
+    "we",
+    "they",
+    "me",
+    "him",
+    "her",
+    "us",
+    "them",
+    "my",
+    "your",
+    "his",
+    "its",
+    "our",
+    "their",
+    "what",
+    "which",
+    "who",
+    "whom",
+    "when",
+    "where",
+    "why",
+    "how",
+    "all",
+    "each",
+    "every",
+    "both",
+    "few",
+    "more",
+    "most",
+    "other",
+    "some",
+    "such",
+    "no",
+    "not",
+    "only",
+    "own",
+    "same",
+    "so",
+    "than",
+    "too",
+    "very",
+    "just",
+    "because",
+    "if",
+    "about",
+    "up",
+    "out",
+    "then",
+    "into",
+    "also",
+    "after",
+    "before",
+    "over",
+    "between",
+    "through",
+    "during",
+    "without",
+    "again",
+    "further",
+    "once",
+    "here",
+    "there",
+    "any",
+    "am",
+    "were",
+    "while",
 }
 
 # ---------------------------------------------------------------------------
@@ -47,10 +145,12 @@ _LANG_MARKERS: Dict[str, set[str]] = {
 def _load_spacy():
     try:
         import spacy
+
         try:
             return spacy.load("en_core_web_sm")
         except OSError:
             from spacy.cli import download
+
             download("en_core_web_sm")
             return spacy.load("en_core_web_sm")
     except ImportError:
@@ -107,34 +207,28 @@ class TextStatisticsAnalyzer:
         ]
         bigram_freq = Counter(bigrams)
         most_common_bigrams = [
-            {"bigram": f"{b[0]} {b[1]}", "count": c}
-            for b, c in bigram_freq.most_common(10)
+            {"bigram": f"{b[0]} {b[1]}", "count": c} for b, c in bigram_freq.most_common(10)
         ]
 
         # Word length distribution
         word_lengths = [len(w) for w in words]
         wl_counter = Counter(word_lengths)
         word_length_distribution = [
-            {"length": length, "count": count}
-            for length, count in sorted(wl_counter.items())
+            {"length": length, "count": count} for length, count in sorted(wl_counter.items())
         ]
 
         # Sentence length distribution
         sent_lengths = [len(s.split()) for s in sentences]
         sl_counter = Counter(sent_lengths)
         sentence_length_distribution = [
-            {"length": length, "count": count}
-            for length, count in sorted(sl_counter.items())
+            {"length": length, "count": count} for length, count in sorted(sl_counter.items())
         ]
 
         # POS distribution
         pos_distribution = self._get_pos_distribution(text)
 
         # Word cloud data (top 100)
-        word_cloud_data = [
-            {"word": w, "frequency": c}
-            for w, c in word_freq.most_common(100)
-        ]
+        word_cloud_data = [{"word": w, "frequency": c} for w, c in word_freq.most_common(100)]
 
         # Time estimates
         reading_time_minutes = round(num_words / 250, 2) if num_words else 0
@@ -153,9 +247,7 @@ class TextStatisticsAnalyzer:
             "avg_sentence_length": round(avg_sentence_length, 2),
             "unique_words": vocabulary_size,
             "vocabulary_richness": round(vocabulary_size / num_words, 4) if num_words else 0,
-            "most_common_words": [
-                {"word": w, "count": c} for w, c in most_common_words
-            ],
+            "most_common_words": [{"word": w, "count": c} for w, c in most_common_words],
             "most_common_bigrams": most_common_bigrams,
             "word_length_distribution": word_length_distribution,
             "sentence_length_distribution": sentence_length_distribution,

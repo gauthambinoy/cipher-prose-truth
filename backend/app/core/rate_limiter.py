@@ -13,7 +13,7 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass, field
-from typing import Callable, Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple
 
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
@@ -27,9 +27,11 @@ logger = logging.getLogger(__name__)
 # Token Bucket implementation
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class TokenBucket:
     """A single token bucket for one client/endpoint pair."""
+
     capacity: float
     refill_rate: float  # tokens per second
     tokens: float = 0.0
@@ -68,10 +70,12 @@ class TokenBucket:
 # Rate Limiter Store
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class EndpointConfig:
     """Rate limit configuration for a specific endpoint pattern."""
-    capacity: int = 20        # max burst tokens
+
+    capacity: int = 20  # max burst tokens
     refill_rate: float = 0.5  # tokens per second (e.g., 0.5 = 1 request per 2 seconds)
 
 
@@ -108,7 +112,9 @@ class RateLimiterStore:
         )
         logger.info(
             "Rate limit configured: %s -> capacity=%d, refill=%.2f/s",
-            path_prefix, capacity, refill_rate,
+            path_prefix,
+            capacity,
+            refill_rate,
         )
 
     def _get_config(self, path: str) -> EndpointConfig:
@@ -167,8 +173,7 @@ class RateLimiterStore:
         self._last_cleanup = now
         stale_threshold = now - self.cleanup_interval * 2
         stale_keys = [
-            key for key, bucket in self._buckets.items()
-            if bucket.last_refill < stale_threshold
+            key for key, bucket in self._buckets.items() if bucket.last_refill < stale_threshold
         ]
         for key in stale_keys:
             del self._buckets[key]
@@ -189,14 +194,22 @@ def get_rate_limiter_store() -> RateLimiterStore:
     global _store
     if _store is None:
         from app.core.config import settings
+
         _store = RateLimiterStore(
             default_capacity=settings.RATE_LIMIT_REQUESTS,
-            default_refill_rate=settings.RATE_LIMIT_REQUESTS / max(settings.RATE_LIMIT_WINDOW_SECONDS, 1),
+            default_refill_rate=settings.RATE_LIMIT_REQUESTS
+            / max(settings.RATE_LIMIT_WINDOW_SECONDS, 1),
         )
         # Configure endpoint-specific limits
-        _store.configure_endpoint("/api/v1/detect", capacity=settings.RATE_LIMIT_BURST, refill_rate=0.1)
-        _store.configure_endpoint("/api/v1/plagiarism", capacity=settings.RATE_LIMIT_BURST, refill_rate=0.1)
-        _store.configure_endpoint("/api/v1/humanize", capacity=settings.RATE_LIMIT_BURST, refill_rate=0.05)
+        _store.configure_endpoint(
+            "/api/v1/detect", capacity=settings.RATE_LIMIT_BURST, refill_rate=0.1
+        )
+        _store.configure_endpoint(
+            "/api/v1/plagiarism", capacity=settings.RATE_LIMIT_BURST, refill_rate=0.1
+        )
+        _store.configure_endpoint(
+            "/api/v1/humanize", capacity=settings.RATE_LIMIT_BURST, refill_rate=0.05
+        )
         _store.configure_endpoint("/ws/detect", capacity=settings.RATE_LIMIT_BURST, refill_rate=0.2)
         _store.configure_endpoint("/api/v1/health", capacity=60, refill_rate=1.0)
     return _store
@@ -217,6 +230,7 @@ SKIP_PATHS = {
 # ---------------------------------------------------------------------------
 # FastAPI Middleware
 # ---------------------------------------------------------------------------
+
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """
@@ -250,7 +264,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             retry_after_int = max(1, int(retry_after) + 1)
             logger.warning(
                 "Rate limit exceeded: ip=%s path=%s retry_after=%ds",
-                ip, path, retry_after_int,
+                ip,
+                path,
+                retry_after_int,
             )
             return JSONResponse(
                 status_code=429,

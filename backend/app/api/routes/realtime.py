@@ -70,6 +70,7 @@ def _get_all_detectors() -> List[Any]:
                 StylometricDetector,
                 AIFingerprintDetector,
             )
+
             _detectors_cache["all"] = [
                 ("perplexity", PerplexityBurstinessDetector()),
                 ("zero_shot", ZeroShotEnsembleDetector()),
@@ -118,6 +119,7 @@ async def _run_single_detector(name: str, detector: Any, text: str) -> Dict[str,
 # WebSocket route
 # ---------------------------------------------------------------------------
 
+
 @router.websocket("/ws/detect")
 async def ws_detect(websocket: WebSocket):
     """
@@ -138,36 +140,44 @@ async def ws_detect(websocket: WebSocket):
             try:
                 payload = json.loads(raw)
             except json.JSONDecodeError:
-                await websocket.send_json({
-                    "status": "error",
-                    "message": "Invalid JSON. Send {\"text\": \"...\"}",
-                })
+                await websocket.send_json(
+                    {
+                        "status": "error",
+                        "message": 'Invalid JSON. Send {"text": "..."}',
+                    }
+                )
                 continue
 
             text = payload.get("text", "").strip()
             if not text:
-                await websocket.send_json({
-                    "status": "error",
-                    "message": "No text provided.",
-                })
+                await websocket.send_json(
+                    {
+                        "status": "error",
+                        "message": "No text provided.",
+                    }
+                )
                 continue
 
             word_count = len(text.split())
             if word_count < settings.MIN_WORDS:
-                await websocket.send_json({
-                    "status": "error",
-                    "message": f"Text too short: {word_count} words (minimum {settings.MIN_WORDS}).",
-                })
+                await websocket.send_json(
+                    {
+                        "status": "error",
+                        "message": f"Text too short: {word_count} words (minimum {settings.MIN_WORDS}).",
+                    }
+                )
                 continue
 
             start_time = time.perf_counter()
 
             # Send initial acknowledgement
-            await websocket.send_json({
-                "status": "started",
-                "total_signals": TOTAL_SIGNALS,
-                "word_count": word_count,
-            })
+            await websocket.send_json(
+                {
+                    "status": "started",
+                    "total_signals": TOTAL_SIGNALS,
+                    "word_count": word_count,
+                }
+            )
 
             detectors = _get_all_detectors()
             signal_results: List[Dict] = []
@@ -177,11 +187,13 @@ async def ws_detect(websocket: WebSocket):
                 # Run detectors one by one, streaming results
                 for name, detector in detectors:
                     # Progress update
-                    await websocket.send_json({
-                        "progress": completed,
-                        "total": len(detectors),
-                        "current_signal": name,
-                    })
+                    await websocket.send_json(
+                        {
+                            "progress": completed,
+                            "total": len(detectors),
+                            "current_signal": name,
+                        }
+                    )
 
                     result_msg = await _run_single_detector(name, detector, text)
                     signal_results.append(result_msg["result"])
@@ -192,11 +204,13 @@ async def ws_detect(websocket: WebSocket):
             else:
                 # Stub mode: generate fake signal results with slight delays
                 for i, sig_name in enumerate(SIGNAL_NAMES):
-                    await websocket.send_json({
-                        "progress": i,
-                        "total": TOTAL_SIGNALS,
-                        "current_signal": sig_name,
-                    })
+                    await websocket.send_json(
+                        {
+                            "progress": i,
+                            "total": TOTAL_SIGNALS,
+                            "current_signal": sig_name,
+                        }
+                    )
 
                     await asyncio.sleep(0.1)  # simulate processing
 
@@ -208,11 +222,13 @@ async def ws_detect(websocket: WebSocket):
                     signal_results.append(stub_result)
                     completed += 1
 
-                    await websocket.send_json({
-                        "signal": sig_name,
-                        "status": "completed",
-                        "result": stub_result,
-                    })
+                    await websocket.send_json(
+                        {
+                            "signal": sig_name,
+                            "status": "completed",
+                            "result": stub_result,
+                        }
+                    )
 
             # Compute overall score
             if signal_results:
@@ -226,7 +242,9 @@ async def ws_detect(websocket: WebSocket):
                     else:
                         weights.append(1.0)
                 total_w = sum(weights)
-                overall_score = sum(p * w for p, w in zip(probs, weights)) / total_w if total_w else 0.5
+                overall_score = (
+                    sum(p * w for p, w in zip(probs, weights)) / total_w if total_w else 0.5
+                )
             else:
                 overall_score = 0.5
 
@@ -241,23 +259,27 @@ async def ws_detect(websocket: WebSocket):
             elapsed_ms = int((time.perf_counter() - start_time) * 1000)
 
             # Send final message
-            await websocket.send_json({
-                "status": "complete",
-                "overall_score": round(overall_score, 4),
-                "classification": classification,
-                "total_signals": completed,
-                "processing_time_ms": elapsed_ms,
-                "word_count": word_count,
-            })
+            await websocket.send_json(
+                {
+                    "status": "complete",
+                    "overall_score": round(overall_score, 4),
+                    "classification": classification,
+                    "total_signals": completed,
+                    "processing_time_ms": elapsed_ms,
+                    "word_count": word_count,
+                }
+            )
 
     except WebSocketDisconnect:
         logger.info("WebSocket client disconnected")
     except Exception as exc:
         logger.error("WebSocket error: %s", exc)
         try:
-            await websocket.send_json({
-                "status": "error",
-                "message": f"Internal server error: {str(exc)}",
-            })
+            await websocket.send_json(
+                {
+                    "status": "error",
+                    "message": f"Internal server error: {str(exc)}",
+                }
+            )
         except Exception:
             pass

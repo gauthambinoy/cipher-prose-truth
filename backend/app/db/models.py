@@ -31,9 +31,7 @@ class Analysis(Base):
 
     __tablename__ = "analyses"
 
-    id: Mapped[str] = mapped_column(
-        String(32), primary_key=True, default=_new_uuid
-    )
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_new_uuid)
     input_text: Mapped[str] = mapped_column(Text, nullable=False)
     word_count: Mapped[int] = mapped_column(Integer, nullable=False)
     overall_ai_score: Mapped[float] = mapped_column(Float, nullable=False)
@@ -47,13 +45,9 @@ class Analysis(Base):
     sentence_scores_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     gltr_data_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
-    attribution_model: Mapped[Optional[str]] = mapped_column(
-        String(128), nullable=True
-    )
+    attribution_model: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
     processing_time_ms: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    model_version: Mapped[str] = mapped_column(
-        String(64), nullable=False, default="v1"
-    )
+    model_version: Mapped[str] = mapped_column(String(64), nullable=False, default="v1")
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -86,9 +80,7 @@ class PlagiarismResult(Base):
 
     __tablename__ = "plagiarism_results"
 
-    id: Mapped[str] = mapped_column(
-        String(32), primary_key=True, default=_new_uuid
-    )
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_new_uuid)
     analysis_id: Mapped[str] = mapped_column(
         String(32),
         ForeignKey("analyses.id", ondelete="CASCADE"),
@@ -114,10 +106,7 @@ class PlagiarismResult(Base):
     analysis: Mapped[Analysis] = relationship(back_populates="plagiarism_results")
 
     def __repr__(self) -> str:
-        return (
-            f"<PlagiarismResult id={self.id!r} "
-            f"similarity={self.similarity_score:.2f}>"
-        )
+        return f"<PlagiarismResult id={self.id!r} " f"similarity={self.similarity_score:.2f}>"
 
 
 class HumanizationResult(Base):
@@ -125,9 +114,7 @@ class HumanizationResult(Base):
 
     __tablename__ = "humanization_results"
 
-    id: Mapped[str] = mapped_column(
-        String(32), primary_key=True, default=_new_uuid
-    )
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_new_uuid)
     analysis_id: Mapped[str] = mapped_column(
         String(32),
         ForeignKey("analyses.id", ondelete="CASCADE"),
@@ -142,9 +129,7 @@ class HumanizationResult(Base):
     strategy: Mapped[str] = mapped_column(
         String(64), nullable=False, default="ollama"
     )  # "ollama", "rule_based", "hybrid"
-    processing_time_ms: Mapped[int] = mapped_column(
-        Integer, nullable=False, default=0
-    )
+    processing_time_ms: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -168,9 +153,7 @@ class BatchJob(Base):
 
     __tablename__ = "batch_jobs"
 
-    id: Mapped[str] = mapped_column(
-        String(32), primary_key=True, default=_new_uuid
-    )
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_new_uuid)
     status: Mapped[str] = mapped_column(
         String(32), nullable=False, default="pending"
     )  # "pending", "processing", "completed", "failed"
@@ -180,12 +163,8 @@ class BatchJob(Base):
     results_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
-    started_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    completed_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    started_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
@@ -199,15 +178,19 @@ class BatchJob(Base):
             f"{self.processed_files}/{self.total_files}>"
         )
 
+    def __init__(self, **kwargs):
+        kwargs.setdefault("status", "pending")
+        kwargs.setdefault("processed_files", 0)
+        kwargs.setdefault("failed_files", 0)
+        super().__init__(**kwargs)
+
 
 class AnalyticsResult(Base):
     """Stores the result of a text analytics analysis (readability, tone, grammar, etc.)."""
 
     __tablename__ = "analytics_results"
 
-    id: Mapped[str] = mapped_column(
-        String(32), primary_key=True, default=_new_uuid
-    )
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_new_uuid)
     analysis_type: Mapped[str] = mapped_column(
         String(64), nullable=False, index=True
     )  # "readability", "tone", "grammar", "statistics", "suggestions", "citations", "comparison", "full"
@@ -223,9 +206,7 @@ class AnalyticsResult(Base):
     )
 
     def __repr__(self) -> str:
-        return (
-            f"<AnalyticsResult id={self.id!r} type={self.analysis_type!r}>"
-        )
+        return f"<AnalyticsResult id={self.id!r} type={self.analysis_type!r}>"
 
 
 class ApiUsage(Base):
@@ -233,20 +214,14 @@ class ApiUsage(Base):
 
     __tablename__ = "api_usage"
 
-    id: Mapped[int] = mapped_column(
-        Integer, primary_key=True, autoincrement=True
-    )
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     client_ip: Mapped[str] = mapped_column(String(45), nullable=False, index=True)
     endpoint: Mapped[str] = mapped_column(String(256), nullable=False)
     method: Mapped[str] = mapped_column(String(10), nullable=False, default="POST")
     status_code: Mapped[int] = mapped_column(Integer, nullable=False, default=200)
     response_time_ms: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    request_size_bytes: Mapped[int] = mapped_column(
-        Integer, nullable=False, default=0
-    )
-    api_key_hash: Mapped[Optional[str]] = mapped_column(
-        String(64), nullable=True
-    )
+    request_size_bytes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    api_key_hash: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -258,6 +233,5 @@ class ApiUsage(Base):
 
     def __repr__(self) -> str:
         return (
-            f"<ApiUsage id={self.id} {self.method} {self.endpoint} "
-            f"status={self.status_code}>"
+            f"<ApiUsage id={self.id} {self.method} {self.endpoint} " f"status={self.status_code}>"
         )
